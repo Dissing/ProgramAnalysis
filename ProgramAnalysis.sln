@@ -1,6 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FrontEnd", "FrontEnd\FrontEnd.fsproj", "{D8090FA5-D83F-45C7-9B77-F56906010E63}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FrontEnd.Tests", "FrontEnd.Tests\FrontEnd.Tests.fsproj", "{BFC12577-627C-41D4-A9AA-AFAB12A170AE}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FrontEnd", "FrontEnd\FrontEnd.fsproj", "{B8CA27C3-8AB0-4FF2-A158-B207054D7781}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -8,9 +10,10 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{D8090FA5-D83F-45C7-9B77-F56906010E63}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D8090FA5-D83F-45C7-9B77-F56906010E63}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D8090FA5-D83F-45C7-9B77-F56906010E63}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D8090FA5-D83F-45C7-9B77-F56906010E63}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BFC12577-627C-41D4-A9AA-AFAB12A170AE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B8CA27C3-8AB0-4FF2-A158-B207054D7781}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B8CA27C3-8AB0-4FF2-A158-B207054D7781}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B8CA27C3-8AB0-4FF2-A158-B207054D7781}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B8CA27C3-8AB0-4FF2-A158-B207054D7781}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
