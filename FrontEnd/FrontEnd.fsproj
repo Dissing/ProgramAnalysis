@@ -13,6 +13,7 @@
       <Compile Include="Tokens.fs" />
       <Compile Include="SourceFile.fs" />
       <Compile Include="Lexer.fs" />
+      <Compile Include="Parser.fs" />
     </ItemGroup>
 
 </Project>

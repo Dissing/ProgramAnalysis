@@ -1,66 +1,68 @@
 namespace FrontEnd
 
 module AST =
-     type Ident = string
+    type Ident = string
      
-     type ArithmeticUnaryOperator =
-         | Not
+    type ArithmeticUnaryOperator =
+        | Not
          
-     type BooleanUnaryOperator =
-         | Not
+    type BooleanUnaryOperator =
+        | Not
          
-     type ArithmeticBinaryOperator =
-         | Add
-         | Subtract
-         | Multiply
-         | Divide
-         | Modulo
-         | Equal
-         | NotEqual
-         | Greater
-         | GreaterEqual
-         | Lesser
-         | LesserEqual
-         | And
-         | Or
-     type BooleanBinaryOperator =
-         | Equal
-         | NotEqual
-         | Greater
-         | GreaterEqual
-         | Lesser
-         | LesserEqual
-         | And
-         | Or  
+    type ArithmeticBinaryOperator =
+        | Add
+        | Subtract
+        | Multiply
+        | Divide
+        | Modulo
+        | Equal
+        | NotEqual
+        | Greater
+        | GreaterEqual
+        | Lesser
+        | LesserEqual
+        | And
+        | Or
+    type BooleanBinaryOperator =
+        | Equal
+        | NotEqual
+        | Greater
+        | GreaterEqual
+        | Lesser
+        | LesserEqual
+        | And
+        | Or  
 
      
-     type Destination =
-         | Identifier of Ident
-         | Array of Ident * ArithmeticExpr
-         | Field of Ident * Ident
-     and ArithmeticExpr =
-         | Variable of Ident
-         | ArrayAccess of Ident * ArithmeticExpr
-         | FieldAccess of Ident * Ident
-         | Unary of ArithmeticUnaryOperator * ArithmeticExpr
-         | Binary of ArithmeticExpr * ArithmeticBinaryOperator * ArithmeticExpr
-     and BooleanExpr =
-         | Unary of BooleanUnaryOperator * BooleanExpr
-         | ArithmeticBinary of ArithmeticExpr * ArithmeticBinaryOperator * ArithmeticExpr
-         | BooleanBinary of BooleanExpr * BooleanBinaryOperator * BooleanExpr
-    
-    type AST = Declaration List * Statement List
-    and Field = string * string
-    and Declaration =
-        | Integer of AST.Ident
-        | Array of AST.Ident * int
-        | Struct of Field List
+    type Location =
+        | Identifier of Ident
+        | Array of Ident * ArithmeticExpr
+        | Field of Ident * Ident
+    and ArithmeticExpr =
+        | Location of Location
+        | Unary of ArithmeticUnaryOperator * ArithmeticExpr
+        | Binary of ArithmeticExpr * ArithmeticBinaryOperator * ArithmeticExpr
+    and BooleanExpr =
+        | Unary of BooleanUnaryOperator * BooleanExpr
+        | ArithmeticBinary of ArithmeticExpr * ArithmeticBinaryOperator * ArithmeticExpr
+        | BooleanBinary of BooleanExpr * BooleanBinaryOperator * BooleanExpr
+         
+    type Field = string * string
+         
+    type Declaration =
+           | Integer of Ident
+           | Array of Ident * int
+           | Struct of Field List
     and Statement =
-        | Assign of AST.Ident * AST.ArithmeticExpr
-        | StructAssign of AST.Ident * AST.ArithmeticExpr list
-        | If of AST.BooleanExpr * Block * Block option
-        | While of AST.BooleanExpr * Block
-        | Read of AST.Ident
-        | Write of AST.Ident
-    and Block = Statement list
+           | Assign of Ident * ArithmeticExpr
+           | StructAssign of Ident * ArithmeticExpr list
+           | If of BooleanExpr * Block * Block option
+           | While of BooleanExpr * Block
+           | Read of Location
+           | Write of ArithmeticExpr
+    and Block = Declaration List * Statement list
+    
+    //TODO Should probably rename to avoid name clash with module
+    //TODO Note how Block and AST have essentially become the same
+    type AST = Declaration List * Statement List
  
