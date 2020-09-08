@@ -52,15 +52,15 @@ module AST =
     type AST = Declaration List * Statement List
     and Field = string * string
     and Declaration =
-        | Integer of Ident
-        | Array of Ident * int
+        | Integer of AST.Ident
+        | Array of AST.Ident * int
         | Struct of Field List
     and Statement =
-        | Assign of Ident * ArithmeticExpr
-        | StructAssign of Ident * ArithmeticExpr list
-        | If of BooleanExpr * Block * Block option
-        | While of BooleanExpr * Block
-        | Read of Ident
-        | Write of Ident
+        | Assign of AST.Ident * AST.ArithmeticExpr
+        | StructAssign of AST.Ident * AST.ArithmeticExpr list
+        | If of AST.BooleanExpr * Block * Block option
+        | While of AST.BooleanExpr * Block
+        | Read of AST.Ident
+        | Write of AST.Ident
     and Block = Statement list
  
