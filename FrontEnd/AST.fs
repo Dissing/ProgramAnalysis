@@ -15,21 +15,14 @@ module AST =
         | Multiply
         | Divide
         | Modulo
+    type ComparisonOperator =
         | Equal
         | NotEqual
         | Greater
         | GreaterEqual
         | Lesser
         | LesserEqual
-        | And
-        | Or
     type BooleanBinaryOperator =
-        | Equal
-        | NotEqual
-        | Greater
-        | GreaterEqual
-        | Lesser
-        | LesserEqual
         | And
         | Or  
 
@@ -44,8 +37,8 @@ module AST =
         | Binary of ArithmeticExpr * ArithmeticBinaryOperator * ArithmeticExpr
     and BooleanExpr =
         | Unary of BooleanUnaryOperator * BooleanExpr
-        | ArithmeticBinary of ArithmeticExpr * ArithmeticBinaryOperator * ArithmeticExpr
-        | BooleanBinary of BooleanExpr * BooleanBinaryOperator * BooleanExpr
+        | Comparison of ArithmeticExpr * ComparisonOperator * ArithmeticExpr
+        | Binary of BooleanExpr * BooleanBinaryOperator * BooleanExpr
          
     type Field = string * string
          
