@@ -4,7 +4,7 @@ module AST =
     type Ident = string
      
     type ArithmeticUnaryOperator =
-        | Not
+        | Negation
          
     type BooleanUnaryOperator =
         | Not
@@ -32,13 +32,14 @@ module AST =
         | Array of Ident * ArithmeticExpr
         | Field of Ident * Ident
     and ArithmeticExpr =
-        | Location of Location
-        | Unary of ArithmeticUnaryOperator * ArithmeticExpr
-        | Binary of ArithmeticExpr * ArithmeticBinaryOperator * ArithmeticExpr
+        | Loc of Location
+        | Literal of int
+        | ArithmeticUnary of ArithmeticUnaryOperator * ArithmeticExpr
+        | ArithmeticBinary of ArithmeticExpr * ArithmeticBinaryOperator * ArithmeticExpr
     and BooleanExpr =
-        | Unary of BooleanUnaryOperator * BooleanExpr
+        | BooleanUnary of BooleanUnaryOperator * BooleanExpr
         | Comparison of ArithmeticExpr * ComparisonOperator * ArithmeticExpr
-        | Binary of BooleanExpr * BooleanBinaryOperator * BooleanExpr
+        | BooleanBinary of BooleanExpr * BooleanBinaryOperator * BooleanExpr
          
     type Field = string * string
          
@@ -47,12 +48,12 @@ module AST =
            | Array of Ident * int
            | Struct of Field List
     and Statement =
-           | Assign of Ident * ArithmeticExpr
-           | StructAssign of Ident * ArithmeticExpr list
-           | If of BooleanExpr * Block * Block option
-           | While of BooleanExpr * Block
-           | Read of Location
-           | Write of ArithmeticExpr
+        | Assign of Location * ArithmeticExpr
+        | StructAssign of Ident * ArithmeticExpr list
+        | If of BooleanExpr * Block * Block option
+        | While of BooleanExpr * Block
+        | Read of Location
+        | Write of ArithmeticExpr
     and Block = Declaration List * Statement list
     
     //TODO Should probably rename to avoid name clash with module

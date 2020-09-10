@@ -1,4 +1,4 @@
-module FrontEnd.Tests
+module FrontEnd.Tests.Lexer
 
 open FrontEnd
 open NUnit.Framework
