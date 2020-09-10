@@ -33,10 +33,11 @@ module AST =
         | Field of Ident * Ident
     and ArithmeticExpr =
         | Loc of Location
-        | Literal of int
+        | IntLiteral of int
         | ArithmeticUnary of ArithmeticUnaryOperator * ArithmeticExpr
         | ArithmeticBinary of ArithmeticExpr * ArithmeticBinaryOperator * ArithmeticExpr
     and BooleanExpr =
+        | BooleanLiteral of bool
         | BooleanUnary of BooleanUnaryOperator * BooleanExpr
         | Comparison of ArithmeticExpr * ComparisonOperator * ArithmeticExpr
         | BooleanBinary of BooleanExpr * BooleanBinaryOperator * BooleanExpr
