@@ -13,12 +13,12 @@ module Parser =
     
     let accept (kind: TokenKind) (ctx: ParsingContext) =
             if not (isDone ctx) && (kindOfHead ctx) = kind then
-                (true, tail ctx)
+                (tail ctx, true)
             else
-                (false, ctx)
+                (ctx, false)
     
     let expect (kind: TokenKind) (ctx: ParsingContext) =
-        let (correct, ctx) = accept kind ctx
+        let (ctx, correct) = accept kind ctx
         if correct then ctx
         else failwithf "Expected token kind %A but got %A" kind (head ctx)
         
@@ -38,7 +38,11 @@ module Parser =
         | AND -> 2
         | OR -> 1
         | _ -> 0
-    
+        
+    type AorB =
+        | A of ArithmeticExpr
+        | B of BooleanExpr
+
     let rec parseItems (ctx: ParsingContext, ((decls, stmts): AST.AST)) =
         if (isDone ctx) || kindOfHead ctx = RIGHT_CURLY then
             (ctx, (List.rev decls, List.rev stmts))
@@ -74,8 +78,19 @@ module Parser =
         let ctx = expect RIGHT_CURLY ctx
         (ctx, ast)
     and parseIf (ctx: ParsingContext) =
-        //Thomas
-        failwith "Not yet implemented"
+        let ctx = expect IF ctx
+        let ctx = expect LEFT_PAREN ctx
+        let (ctx, condition) = parseBooleanExpr ctx
+        let ctx = expect RIGHT_PAREN ctx
+        let (ctx, then_block) = parseBlock ctx
+        let (ctx, has_else) = accept ELSE ctx
+        let (ctx, else_block) =
+            if has_else then 
+                let (ctx, else_block) = parseBlock ctx
+                (ctx, Some (else_block))
+            else
+                (ctx, None)
+        (ctx, Statement.If (condition, then_block, else_block))
     and parseWhile (ctx: ParsingContext) =
         let ctx = expect WHILE ctx
         let ctx = expect LEFT_PAREN ctx
@@ -116,37 +131,75 @@ module Parser =
         | _ ->
             (ctx, Location.Identifier ident)
         
+    and parseArithmeticExpr' (ctx: ParsingContext) (precedence: int) =
+        let (ctx, left) =
+            match kindOfHead ctx with
+            | IDENTIFIER(_) -> let (ctx, location) = parseLocation ctx
+                               (ctx, ArithmeticExpr.Loc location)
+            | MINUS -> let (ctx, inner) = parseArithmeticExpr' (tail ctx) prefixPrecedence
+                       (ctx, ArithmeticUnary (ArithmeticUnaryOperator.Negation, inner))
+            | LEFT_PAREN -> let (ctx, inner) = parseArithmeticExpr (tail ctx)
+                            (expect RIGHT_PAREN ctx, inner)
+            | INTEGER(i) -> (tail ctx, IntLiteral i)
+            | other -> failwithf "Unexpected token %A in arithmetic expression" other
+    
+        let rec precedenceHelper (ctx: ParsingContext) (left: ArithmeticExpr) =
+            let currentPrecedence = precedenceOf (kindOfHead ctx)
+            if precedence >= currentPrecedence then
+                (ctx, left)
+            else
+                let operator = match kindOfHead ctx with
+                               | TokenKind.PLUS -> Add
+                               | TokenKind.MINUS -> Subtract
+                               | TokenKind.MULTIPLICATION -> Multiply
+                               | TokenKind.DIVISION -> Divide
+                               | other -> failwithf "Unexpected infix arithmetic operator %A" other
+                let (ctx, right) = parseArithmeticExpr' (tail ctx) currentPrecedence
+                precedenceHelper ctx (ArithmeticExpr.ArithmeticBinary (left, operator, right))
+        
+        precedenceHelper ctx left
     and parseArithmeticExpr (ctx: ParsingContext) =
-        let rec parseArithmeticExpr' (ctx: ParsingContext) (precedence: int) =
+        parseArithmeticExpr' ctx 0
+        
+    //Consider unifying the parsing of arithmetic and boolean expressions
+    and parseBooleanExpr (ctx: ParsingContext) =
+        let rec parseBooleanExpr' (ctx: ParsingContext) (precedence: int) =
             let (ctx, left) =
                 match kindOfHead ctx with
-                | IDENTIFIER(_) -> let (ctx, location) = parseLocation ctx
-                                   (ctx, ArithmeticExpr.Loc location)
-                | MINUS -> let (ctx, inner) = parseArithmeticExpr' (tail ctx) prefixPrecedence
-                           (ctx, ArithmeticUnary (ArithmeticUnaryOperator.Negation, inner))
-                | LEFT_PAREN -> let (ctx, inner) = parseArithmeticExpr (tail ctx)
-                                (expect RIGHT_PAREN ctx, inner)
-                | INTEGER(i) -> (tail ctx, Literal i)
-                | other -> failwithf "Unexpected token %A in arithmetic expression" other
-        
-            let rec precedenceHelper (ctx: ParsingContext) (left: ArithmeticExpr) =
+                | TRUE -> (tail ctx, B (BooleanLiteral true))
+                | FALSE -> (tail ctx, B(BooleanLiteral true))
+            
+            let rec precedenceHelper (ctx: ParsingContext) (left: AorB) =
                 let currentPrecedence = precedenceOf (kindOfHead ctx)
                 if precedence >= currentPrecedence then
                     (ctx, left)
                 else
-                    let operator = match kindOfHead ctx with
-                                   | TokenKind.PLUS -> Add
-                                   | TokenKind.MINUS -> Subtract
-                                   | TokenKind.MULTIPLICATION -> Multiply
-                                   | TokenKind.DIVISION -> Divide
-                                   | other -> failwithf "Unexpected infix arithmetic operator %A" other
-                    let (ctx, right) = parseArithmeticExpr' (tail ctx) currentPrecedence
-                    precedenceHelper ctx (ArithmeticExpr.ArithmeticBinary (left, operator, right))
-            
+                    match left with
+                    | A(l) ->
+                        let operator =
+                            match kindOfHead ctx with
+                            | TokenKind.GREATER -> Greater
+                            | TokenKind.GREATER_EQUAL -> GreaterEqual
+                            | TokenKind.LESSER -> Lesser
+                            | TokenKind.LESSER_EQUAL -> LesserEqual
+                        let (ctx, right) = parseArithmeticExpr' (tail ctx) currentPrecedence
+                        precedenceHelper ctx (B(BooleanExpr.Comparison (l, operator, right)))
+                    | B(l) ->
+                        let operator =
+                            match kindOfHead ctx with
+                            | TokenKind.AND -> And
+                            | TokenKind.OR -> Or
+                        let (ctx, right) = parseBooleanExpr' (tail ctx) currentPrecedence
+                        match right with
+                        | B(r) -> precedenceHelper ctx (B(BooleanExpr.BooleanBinary (l, operator, r)))
+                        | A(a) -> failwithf "Cant combine a boolean expression and an arithmetic expression with an %A operator" operator
+                        
             precedenceHelper ctx left
-        parseArithmeticExpr' ctx 0
-    and parseBooleanExpr (ctx: ParsingContext) =
-        failwith "Not yet implemented"
+
+        let (ctx, expr) = parseBooleanExpr' ctx 0
+        match expr with
+          | B(b) -> (ctx, b)
+          | A(a) -> failwithf "Expected boolean expression but got pure arithmetic expression %A" a
     
     let parse (source: SourceFile) (tokens: Token List) =
         let ctx = (source, tokens)
