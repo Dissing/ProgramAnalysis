@@ -12,19 +12,12 @@ type TokenKind =
     | ELSE
     | WHILE
     | INT
-    // Operator
+    // Operators
     | PLUS
     | MINUS
     | MULTIPLICATION
     | DIVISION
     | MODULO
-    | LEFT_CURLY
-    | LEFT_SQUARE
-    | LEFT_PAREN
-    | RIGHT_CURLY
-    | RIGHT_SQUARE
-    | RIGHT_PAREN
-    | SEMI_COLON
     | GREATER
     | LESSER
     | GREATER_EQUAL
@@ -34,6 +27,14 @@ type TokenKind =
     | NOT
     | AND
     | OR
+    // Punctuation
+    | LEFT_CURLY
+    | LEFT_SQUARE
+    | LEFT_PAREN
+    | RIGHT_CURLY
+    | RIGHT_SQUARE
+    | RIGHT_PAREN
+    | SEMI_COLON
     | ASSIGN
     | DOT
     | COMMA
