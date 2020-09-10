@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net461</TargetFramework>
+        <TargetFramework>netcoreapp3.1</TargetFramework>
 
         <IsPackable>false</IsPackable>
         <GenerateProgramFile>false</GenerateProgramFile>
@@ -14,8 +14,8 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Compile Include="Lexer.fs" />
-      <Compile Include="Parser.fs" />
+        <Compile Include="Parser.fs" />
+        <Compile Include="Lexer.fs" />
     </ItemGroup>
 
     <ItemGroup>
