@@ -50,7 +50,7 @@ module AST =
            | Struct of Field List
     and Statement =
         | Assign of Location * ArithmeticExpr
-        | StructAssign of Ident * ArithmeticExpr list
+        | StructAssign of Ident * (Field * ArithmeticExpr) List
         | If of BooleanExpr * Block * Block option
         | While of BooleanExpr * Block
         | Read of Location
