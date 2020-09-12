@@ -5,35 +5,34 @@ open FrontEnd.AST
 open FrontEnd.ProgramGraph
 
 module AnalysisDefinition =
-    
     type IAlgorithm =
         abstract member initialise: graph: Graph -> declaration: List<Declaration> -> List<Node>
-        default this.initialise graph declaration =
-            failwith "Not implemented"
+        //default this.initialise graph declaration =
+        //    failwith "Not implemented"
         
         abstract member updateAssign: nodeIn: Node * assign: AssignExpr * nodeOut: Node -> List<Node>    
-        default this.updateAssign (nodeIn, assign, nodeOut) =
-            failwith "Not implemented"
+        //default this.updateAssign (nodeIn, assign, nodeOut) =
+        //    failwith "Not implemented"
         
         abstract member updateAssignLiteral: nodeIn: Node * assign: AssignLiteralExpr * nodeOut: Node -> List<Node>
-        default this.updateAssignLiteral (nodeIn, assignLiteral, nodeOut) =
-            failwith "Not implemented"
+        //default this.updateAssignLiteral (nodeIn, assignLiteral, nodeOut) =
+        //    failwith "Not implemented"
         
         abstract member updateCondition: nodeIn: Node * condition: BooleanExpr * nodeOut: Node -> List<Node>
-        default this.updateCondition (nodeIn, condition, nodeOut) =
-            failwith "Not implemented"
+        //default this.updateCondition (nodeIn, condition, nodeOut) =
+        //    failwith "Not implemented"
         
         abstract member updateRead: nodeIn: Node * read: Location * nodeOut: Node -> List<Node>
-        default this.updateRead (nodeIn, read, nodeOut) =
-            failwith "Not implemented"
+        //default this.updateRead (nodeIn, read, nodeOut) =
+        //    failwith "Not implemented"
         
         abstract member updateWrite: nodeIn: Node * write: ArithmeticExpr * nodeOut: Node -> List<Node>
-        default this.updateWrite (nodeIn, write, nodeOut) =
-            failwith "Not implemented"
+        //default this.updateWrite (nodeIn, write, nodeOut) =
+        //    failwith "Not implemented"
         
         abstract member printSolution: string        
-        default this.printSolution =
-            failwith "Not implemented"
+        //default this.printSolution =
+        //    failwith "Not implemented"
     
     
     let getOutEdges (node : Node) (edges : List<Edge>) =

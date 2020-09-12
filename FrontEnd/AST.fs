@@ -47,7 +47,7 @@ module AST =
     type Declaration =
            | Integer of Ident
            | Array of Ident * int
-           | Struct of Field List
+           | Struct of Ident * Field List
     and Statement =
         | Assign of Location * ArithmeticExpr
         | StructAssign of Ident * ArithmeticExpr list
