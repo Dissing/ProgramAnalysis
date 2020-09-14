@@ -76,8 +76,8 @@ module ReachingDefinitions =
                                updateMapWithDifferences mapIn mapOut tail modified
             | [] -> (mapOut, modified)
             
-        member this.states: (Map<string, Set<RDVarState>>)[] = [||]
-        member this.keys: List<string> = []
+        let mutable states: (Map<string, Set<RDVarState>>)[] = [||]
+        let mutable keys: List<string> = []
         
         interface IAlgorithm with
         
@@ -86,7 +86,7 @@ module ReachingDefinitions =
             member this.initialise graph declaration =
                 let nodes = fst graph
                 
-                this.states = Array.create (nodes.Length) (Map.empty)
+                states <- Array.create (nodes.Length) (Map.empty)
                 
                 let rec parseFields (id: Ident) (fields: List<FieldDeclaration>) (map: Map<string, Set<RDVarState>>) (keys: List<string>) =
                     match fields with
@@ -102,20 +102,21 @@ module ReachingDefinitions =
                                                                 parseDeclaration tail newMap newKeys
                     | [] -> (map, keys)
                 
-                (this.states.[0], this.keys) = parseDeclaration declaration Map.empty []
-                
+                let (startMap, newKeys) = parseDeclaration declaration Map.empty []
+                states.[0] <- startMap
+                keys <- newKeys
                 [nodes.[0]]
             
             
             member this.updateAssign (nodeIn, assign, nodeOut) =
                 let location = fst assign
                 
-                let newMap = performKillGenAction this.states.[nodeIn] location nodeIn nodeOut                
+                let newMap = performKillGenAction states.[nodeIn] location nodeIn nodeOut                
                 
-                let (mapUpdated, modified) = updateMapWithDifferences newMap this.states.[nodeOut] this.keys false
+                let (mapUpdated, modified) = updateMapWithDifferences newMap states.[nodeOut] keys false
                 
                 if modified = true then
-                    this.states.[nodeOut] = mapUpdated
+                    states.[nodeOut] <- mapUpdated
                     [nodeOut]
                 else
                     []                    
@@ -131,41 +132,41 @@ module ReachingDefinitions =
                     | [] -> mapIn
                 
                 let (strct, assigns) = assignLiteral
-                let newMap = recursiveKillGen this.states.[nodeIn] strct assigns nodeIn nodeOut                
+                let newMap = recursiveKillGen states.[nodeIn] strct assigns nodeIn nodeOut                
                 
-                let (mapUpdated, modified) = updateMapWithDifferences newMap this.states.[nodeOut] this.keys false
+                let (mapUpdated, modified) = updateMapWithDifferences newMap states.[nodeOut] keys false
                 
                 if modified = true then
-                    this.states.[nodeOut] = mapUpdated
+                    states.[nodeOut] <- mapUpdated
                     [nodeOut]
                 else
                     []                    
                 
             member this.updateCondition (nodeIn, _, nodeOut) = 
-                let (mapUpdated, modified) = updateMapWithDifferences this.states.[nodeIn] this.states.[nodeOut] this.keys false
+                let (mapUpdated, modified) = updateMapWithDifferences states.[nodeIn] states.[nodeOut] keys false
                                 
                 if modified = true then
-                    this.states.[nodeOut] = mapUpdated
+                    states.[nodeOut] <- mapUpdated
                     [nodeOut]
                 else
                     []
                     
             member this.updateRead (nodeIn, read, nodeOut) =
-                let newMap = performKillGenAction this.states.[nodeIn] read nodeIn nodeOut                
+                let newMap = performKillGenAction states.[nodeIn] read nodeIn nodeOut                
                 
-                let (mapUpdated, modified) = updateMapWithDifferences newMap this.states.[nodeOut] this.keys false
+                let (mapUpdated, modified) = updateMapWithDifferences newMap states.[nodeOut] keys false
                 
                 if modified = true then
-                    this.states.[nodeOut] = mapUpdated
+                    states.[nodeOut] <- mapUpdated
                     [nodeOut]
                 else
                     []               
         
             member this.updateWrite (nodeIn, _, nodeOut) =
-                let (mapUpdated, modified) = updateMapWithDifferences this.states.[nodeIn] this.states.[nodeOut] this.keys false
+                let (mapUpdated, modified) = updateMapWithDifferences states.[nodeIn] states.[nodeOut] keys false
                                 
                 if modified = true then
-                    this.states.[nodeOut] = mapUpdated
+                    states.[nodeOut] <- mapUpdated
                     [nodeOut]
                 else
                     []
