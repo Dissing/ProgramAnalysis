@@ -9,7 +9,7 @@ module Parser =
     let head (ctx: ParsingContext) = (snd ctx).Head
     let tail (ctx: ParsingContext) = (fst ctx, (snd ctx).Tail)
     let kindOfHead (ctx: ParsingContext) = fst (snd ctx).Head
-    let isDone (ctx: ParsingContext) = (snd ctx).IsEmpty
+    let isDone (ctx: ParsingContext) = (kindOfHead ctx) = EOF
     
     let accept (kind: TokenKind) (ctx: ParsingContext) =
             if not (isDone ctx) && (kindOfHead ctx) = kind then
@@ -23,21 +23,24 @@ module Parser =
         else failwithf "Expected token kind %A but got %A" kind (head ctx)
         
     let prefixPrecedence = 6
-    let precedenceOf = function
+    let arithmeticPrecedenceOf = function
         | MULTIPLICATION -> 5
         | DIVISION -> 5
         | MODULO -> 5
         | PLUS -> 4
         | MINUS -> 4
-        | LESSER -> 3
-        | LESSER_EQUAL -> 3
-        | GREATER -> 3
-        | GREATER_EQUAL -> 3
-        | EQUAL -> 3
-        | NOT_EQUAL -> 3
-        | AND -> 2
-        | OR -> 1
         | _ -> 0
+        
+    let booleanPrecedenceOf = function
+            | LESSER -> 3
+            | LESSER_EQUAL -> 3
+            | GREATER -> 3
+            | GREATER_EQUAL -> 3
+            | EQUAL -> 3
+            | NOT_EQUAL -> 3
+            | AND -> 2
+            | OR -> 1
+            | _ -> 0
         
     type AorB =
         | A of ArithmeticExpr
@@ -70,8 +73,30 @@ module Parser =
                     let ctx = expect SEMI_COLON ctx
                     let stmt = Assign (location, rhs)
                     parseItems (ctx, (decls, stmt::stmts))
+                | INT ->
+                    //Skip over the initial int
+                    let ctx = tail ctx
+                    
+                    let (ctx, is_array) = accept LEFT_SQUARE ctx
+                    let (ctx, array_size) =
+                        if is_array then
+                            match kindOfHead ctx with
+                            | INTEGER(n) ->
+                                let ctx = expect RIGHT_SQUARE (tail ctx)
+                                (ctx, Some(n))
+                            | other -> failwithf "Expected array to have integer size but got %A" other
+                        else
+                            (ctx, None)
+                    
+                    let (ctx, ident) = parseIdent ctx
+                    let ctx = expect SEMI_COLON ctx
+                    let decl = if array_size.IsSome then
+                                    ArrayDecl(ident, array_size.Value)
+                                else
+                                    Integer(ident)
+                    parseItems (ctx, (decl::decls, stmts))
                         
-                | other -> failwithf "Unexpected token %A" other
+                | other -> failwithf "Parsing items but got unexpected token %A" other
     and parseBlock (ctx: ParsingContext) =
         let ctx = expect LEFT_CURLY ctx
         let (ctx, ast) = parseItems (ctx, ([], []))
@@ -144,7 +169,7 @@ module Parser =
             | other -> failwithf "Unexpected token %A in arithmetic expression" other
     
         let rec precedenceHelper (ctx: ParsingContext) (left: ArithmeticExpr) =
-            let currentPrecedence = precedenceOf (kindOfHead ctx)
+            let currentPrecedence = arithmeticPrecedenceOf (kindOfHead ctx)
             if precedence >= currentPrecedence then
                 (ctx, left)
             else
@@ -172,10 +197,13 @@ module Parser =
                                 (expect RIGHT_PAREN ctx, B(inner))
                 | NOT -> let (ctx, inner) = parseBooleanExpr (tail ctx)
                          (ctx, B(BooleanUnary (BooleanUnaryOperator.Not, inner)))
+                | IDENTIFIER(_) | MINUS | INTEGER(_) ->
+                                let (ctx, inner) = parseArithmeticExpr ctx
+                                (ctx, A(inner))
                 | other -> failwithf "Unexpected boolean expression prefix %A" other
             
             let rec precedenceHelper (ctx: ParsingContext) (left: AorB) =
-                let currentPrecedence = precedenceOf (kindOfHead ctx)
+                let currentPrecedence = booleanPrecedenceOf (kindOfHead ctx)
                 if precedence >= currentPrecedence then
                     (ctx, left)
                 else
