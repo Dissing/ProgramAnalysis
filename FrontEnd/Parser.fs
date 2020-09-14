@@ -167,7 +167,12 @@ module Parser =
             let (ctx, left) =
                 match kindOfHead ctx with
                 | TRUE -> (tail ctx, B (BooleanLiteral true))
-                | FALSE -> (tail ctx, B(BooleanLiteral true))
+                | FALSE -> (tail ctx, B(BooleanLiteral false))
+                | LEFT_PAREN -> let (ctx, inner) = parseBooleanExpr (tail ctx)
+                                (expect RIGHT_PAREN ctx, B(inner))
+                | NOT -> let (ctx, inner) = parseBooleanExpr (tail ctx)
+                         (ctx, B(BooleanUnary (BooleanUnaryOperator.Not, inner)))
+                | other -> failwithf "Unexpected boolean expression prefix %A" other
             
             let rec precedenceHelper (ctx: ParsingContext) (left: AorB) =
                 let currentPrecedence = precedenceOf (kindOfHead ctx)
@@ -178,10 +183,13 @@ module Parser =
                     | A(l) ->
                         let operator =
                             match kindOfHead ctx with
+                            | TokenKind.EQUAL -> Equal
+                            | TokenKind.NOT_EQUAL -> NotEqual
                             | TokenKind.GREATER -> Greater
                             | TokenKind.GREATER_EQUAL -> GreaterEqual
                             | TokenKind.LESSER -> Lesser
                             | TokenKind.LESSER_EQUAL -> LesserEqual
+                            | other -> failwithf "Unexpected boolean expression infix comparison operator %A" other
                         let (ctx, right) = parseArithmeticExpr' (tail ctx) currentPrecedence
                         precedenceHelper ctx (B(BooleanExpr.Comparison (l, operator, right)))
                     | B(l) ->
@@ -189,6 +197,7 @@ module Parser =
                             match kindOfHead ctx with
                             | TokenKind.AND -> And
                             | TokenKind.OR -> Or
+                            | other -> failwithf "Unexpected boolean expression infix operator %A" other
                         let (ctx, right) = parseBooleanExpr' (tail ctx) currentPrecedence
                         match right with
                         | B(r) -> precedenceHelper ctx (B(BooleanExpr.BooleanBinary (l, operator, r)))

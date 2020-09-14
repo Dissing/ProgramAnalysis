@@ -14,6 +14,13 @@ module Lexer =
         let span = { From = pos; To = pos; }
         ((token, span)::tokens, tail ctx)
         
+    let lexDouble (expected: char) (token: TokenKind) (tokens: Token List) (ctx: LexingContext) =
+        if head (tail ctx) = expected then
+            let pos = currentPos ctx
+            let span = { From = pos; To = pos+1; }
+            ((token, span)::tokens, tail (tail ctx))
+        else failwithf "%c followed by unexpected %c" (head ctx) (head (tail ctx))
+        
     let lexInteger (tokens: Token List) (ctx: LexingContext) =
         let from_pos = currentPos ctx
         let rec extractLexeme (ctx: LexingContext) (lexeme: string) =
@@ -85,13 +92,14 @@ module Lexer =
                             | '=' -> (lexSingle GREATER_EQUAL tokens (tail ctx))
                             | _ -> (lexSingle GREATER tokens ctx)
                             )
-            | ':' -> Scan (
-                            match head (tail ctx) with
-                            | '=' -> let pos = currentPos ctx
-                                     let span = { From = pos; To = pos+1; }
-                                     ((ASSIGN, span)::tokens, tail (tail ctx))
-                            | other -> failwithf "Colon followed by unexpected %c" other
+            | '!' -> Scan (
+                            match head ctx with
+                            | '=' -> (lexSingle NOT_EQUAL tokens (tail ctx))
+                            | _ -> (lexSingle NOT tokens ctx)
                             )
+            | ':' -> Scan (lexDouble '=' ASSIGN tokens ctx)
+            | '|' -> Scan (lexDouble '|' OR tokens ctx)
+            | '&' -> Scan (lexDouble '&' AND tokens ctx)
             | c -> if System.Char.IsLetter(c) then Scan (lexIdentifier tokens ctx)
                    else if System.Char.IsDigit(c) then Scan (lexInteger tokens ctx)
                    else failwithf "Unknown character '%c'" c

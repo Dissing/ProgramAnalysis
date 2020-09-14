@@ -65,3 +65,45 @@ let parseIf () =
         AST.If(AST.BooleanLiteral true, then_block, None)
     ])
     Assert.That(ast, Is.EqualTo(expected))
+    
+[<Test>]
+let parseIfElse () =
+    let source = SourceFile("parseBoolean.c", "if (true)\n{ x := 0; }\nelse { z := 0; }")
+    let ast = Parser.parse source (Lexer.lex source.Content)
+    
+    let then_block = ([], [AST.Assign(AST.Identifier "x", AST.IntLiteral 0)])
+    let else_block = ([], [AST.Assign(AST.Identifier "z", AST.IntLiteral 0)])
+
+    let expected = ([],[
+        AST.If(AST.BooleanLiteral true, then_block, Some(else_block))
+    ])
+    Assert.That(ast, Is.EqualTo(expected))
+    
+[<Test>]
+let parseWhile () =
+    let source = SourceFile("parseBoolean.c", "while (true) { x := 0; }")
+    let ast = Parser.parse source (Lexer.lex source.Content)
+    
+    let then_block = ([], [AST.Assign(AST.Identifier "x", AST.IntLiteral 0)])
+
+    let expected = ([],[
+        AST.While(AST.BooleanLiteral true, then_block)
+    ])
+    Assert.That(ast, Is.EqualTo(expected))
+    
+[<Test>]
+let parseAndOr () =
+    let source = SourceFile("parseBoolean.c", "if (true || false && !(true || false)) { x := 0; }")
+    let ast = Parser.parse source (Lexer.lex source.Content)
+    
+    let e1 = AST.BooleanBinary (AST.BooleanLiteral true, AST.Or, AST.BooleanLiteral false)
+    let e2 = AST.BooleanUnary (AST.Not, e1)
+    let e3 = AST.BooleanBinary (AST.BooleanLiteral false, AST.And, e2)
+    let e4 = AST.BooleanBinary (AST.BooleanLiteral true, AST.Or, e3)
+    
+    let then_block = ([], [AST.Assign(AST.Identifier "x", AST.IntLiteral 0)])
+
+    let expected = ([],[
+        AST.If(e4, then_block, None)
+    ])
+    Assert.That(ast, Is.EqualTo(expected))
