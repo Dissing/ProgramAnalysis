@@ -42,15 +42,15 @@ module AST =
         | Comparison of ArithmeticExpr * ComparisonOperator * ArithmeticExpr
         | BooleanBinary of BooleanExpr * BooleanBinaryOperator * BooleanExpr
          
-    type Field = string * string
+    type FieldDeclaration = string * string
          
     type Declaration =
            | Integer of Ident
            | Array of Ident * int
-           | Struct of Ident * Field List
+           | Struct of Ident * FieldDeclaration List
     and Statement =
         | Assign of Location * ArithmeticExpr
-        | StructAssign of Ident * ArithmeticExpr list
+        | StructAssign of Ident * (Ident * ArithmeticExpr) list
         | If of BooleanExpr * Block * Block option
         | While of BooleanExpr * Block
         | Read of Location

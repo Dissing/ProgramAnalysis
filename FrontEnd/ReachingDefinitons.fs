@@ -16,154 +16,159 @@ module ReachingDefinitions =
     
     type RD() =
         
-        let shouldKill (state: RDVarState) (location: Location) =
+        let shouldNotKill (location: Location) (state: RDVarState) =
             match state with
             | UnmodifiedStandard id -> match location with
                                         | Identifier iden -> if id = iden then
-                                                                 true
-                                                             else
                                                                  false
-                                        | _ -> false
+                                                             else
+                                                                 true
+                                        | _ -> true
             | UnmodifiedField (s, f) -> match location with
                                         | Location.Field (strct, field) -> if s = strct && f = field then
-                                                                               true
-                                                                           else
                                                                                false
-                                        | _ -> false
+                                                                           else
+                                                                               true
+                                        | _ -> true
             | ModifiedStandard (id, _, _) -> match location with
                                              | Identifier iden -> if id = iden then
-                                                                      true
-                                                                  else
                                                                       false
-                                             | _ -> false
+                                                                  else
+                                                                      true
+                                             | _ -> true
             | ModifiedField ((s, f), _, _) -> match location with
                                               | Location.Field (strct, field) -> if s = strct && f = field then
-                                                                                     true
-                                                                                 else
                                                                                      false
-                                              | _ -> false
-            | _ -> false
-            
-        let rec killAction (states:List<RDVarState>) (location : Location) =
-            match states with
-            | head :: tail -> if (shouldKill head location) then
-                                  killAction tail location
-                              else
-                                  head::(killAction tail location)
-            | [] -> []
-       
-         
-        let rec killList (states:List<RDVarState>) (structField: Ident) (literals : List<Field * ArithmeticExpr>) =
-            match literals with
-            | head :: tail -> if (shouldKill head location) then
-                                  killAction tail location
-                              else
-                                  head::(killAction tail location)
-            | [] -> states
-         
-        let rec stateExists (states: List<RDVarState>) (s: RDVarState) =
-            match states with
-            | head::tail -> if s = head then
-                                    true
-                                else
-                                    stateExists tail s
-            | [] -> false
-            
-        let genAction (states: List<RDVarState>) (location : Location) (nodeIn : Node) (nodeOut: Node) =
-            let createAction (location : Location) (nodeIn : Node) (nodeOut: Node) = 
-                    match location with
-                    | Identifier id -> ModifiedStandard(id, nodeIn, nodeOut)
-                    | Location.Array (id, _) -> ModifiedArray(id, nodeIn, nodeOut)
-                    | Location.Field (strct, id) -> ModifiedField((strct, id), nodeIn, nodeOut)
+                                                                                 else
+                                                                                     true
+                                              | _ -> true
+            | _ -> true
            
-            let s = createAction location nodeIn nodeOut
+        let genAction (states: Set<RDVarState>) (location : Location) (nodeIn : Node) (nodeOut: Node) =
+            match location with
+            | Identifier id -> ModifiedStandard(id, nodeIn, nodeOut)
+            | Location.Array (id, _) -> ModifiedArray(id, nodeIn, nodeOut)
+            | Location.Field (strct, id) -> ModifiedField((strct, id), nodeIn, nodeOut)
+        
+        
+        let createFieldString (strct: string) (id: string) = strct + "." + id
+        
+        let locationToString (loc: Location) =
+            match loc with
+            | Identifier id -> id
+            | Location.Array (id, _) -> id
+            | Location.Field (strct, id) -> createFieldString strct id 
+        
+        let performKillGenAction (mapIn: Map<string, Set<RDVarState>>) (location : Location) (nodeIn : Node) (nodeOut: Node) =
+                let lookup = locationToString location
+                let inSet = mapIn.[lookup]
+                let killedSet = Set.filter (shouldNotKill location) inSet
+                let newSet = killedSet.Add (genAction killedSet location nodeIn nodeOut)
+                 
+                mapIn.Add (lookup, newSet)
             
-            if (stateExists states s) then
-                states
-            else
-                s::states
-                   
-        let rec findDifferences (newList: List<RDVarState>) (nextState: List<RDVarState>) = 
-            match newList with
-            | head :: tail -> if (stateExists nextState head) then
-                                    findDifferences tail nextState
-                              else
-                                    head::(findDifferences tail nextState)
-            | [] -> nextState
-       
-        member this.states: List<RDVarState>[] = [||]
- 
+        let rec updateMapWithDifferences (mapIn: Map<string, Set<RDVarState>>) (mapOut: Map<string, Set<RDVarState>>) (keys: List<string>) (modified: bool) =
+            match keys with
+            | key::tail -> let diff = Set.difference mapIn.[key] mapOut.[key]
+                           if diff.Count > 0 then
+                               updateMapWithDifferences mapIn (mapOut.Add (key, (Set.union mapOut.[key] diff))) tail true                           
+                           else
+                               updateMapWithDifferences mapIn mapOut tail modified
+            | [] -> (mapOut, modified)
+            
+        member this.states: (Map<string, Set<RDVarState>>)[] = [||]
+        member this.keys: List<string> = []
+        
         interface IAlgorithm with
+        
+            member this.isReverse = false
+            
             member this.initialise graph declaration =
                 let nodes = fst graph
                 
-                this.states = Array.create (nodes.Length) (List.empty)
+                this.states = Array.create (nodes.Length) (Map.empty)
                 
-                let rec parseFields id fields =
+                let rec parseFields (id: Ident) (fields: List<FieldDeclaration>) (map: Map<string, Set<RDVarState>>) (keys: List<string>) =
                     match fields with
-                    | head :: tail -> UnmodifiedField((id, (snd head)))::(parseFields id tail)
-                    | [] -> []
-                let rec parseDeclaration dList =
+                    | head :: tail -> let key = createFieldString id (snd head)
+                                      parseFields id tail (map.Add (key, Set([UnmodifiedField((id, (snd head)))]))) (key::keys)
+                    | [] -> (map, keys)
+                let rec parseDeclaration (dList: List<Declaration>) (map: Map<string, Set<RDVarState>>) (keys: List<string>) =
                     match dList with
                     | head :: tail -> match head with
-                                       | Integer id -> UnmodifiedStandard(id)::(parseDeclaration tail)
-                                       | Array (id, _) -> UnmodifiedArray(id)::(parseDeclaration tail)
-                                       | Struct (id, fields) -> (parseFields id fields)@(parseDeclaration tail)
-                    | [] -> []
+                                       | Integer id -> parseDeclaration tail (map.Add (id, Set([UnmodifiedStandard(id)]))) (id::keys)
+                                       | Array (id, _) -> parseDeclaration tail (map.Add (id, Set([UnmodifiedArray(id)]))) (id::keys)
+                                       | Struct (id, fields) -> let (newMap, newKeys) = parseFields id fields map keys
+                                                                parseDeclaration tail newMap newKeys
+                    | [] -> (map, keys)
                 
-                this.states.[0] = parseDeclaration declaration
+                (this.states.[0], this.keys) = parseDeclaration declaration Map.empty []
                 
                 [nodes.[0]]
             
             
             member this.updateAssign (nodeIn, assign, nodeOut) =
                 let location = fst assign
-                let inList = this.states.[nodeIn]
-                let killedList = killAction inList location
-                let newList = genAction killedList location nodeIn nodeOut
                 
-                let diff = findDifferences newList this.states.[nodeOut]
+                let newMap = performKillGenAction this.states.[nodeIn] location nodeIn nodeOut                
                 
-                if diff.Length = 0 then
-                    []
-                else
-                    this.states.[nodeOut] = diff@(this.states.[nodeOut])
+                let (mapUpdated, modified) = updateMapWithDifferences newMap this.states.[nodeOut] this.keys false
+                
+                if modified = true then
+                    this.states.[nodeOut] = mapUpdated
                     [nodeOut]
-                    
+                else
+                    []                    
                     
         
             member this.updateAssignLiteral (nodeIn, assignLiteral, nodeOut) =
-                List.empty
-        
-            member this.updateCondition (nodeIn, _, nodeOut) = 
-                let diff = findDifferences this.states.[nodeIn] this.states.[nodeOut] 
-                if diff.Length = 0 then
-                    []
-                else
-                    this.states.[nodeOut] = diff@(this.states.[nodeOut])
+                let rec recursiveKillGen (mapIn: Map<string, Set<RDVarState>>) (strct: string) (assigns: List<Ident*ArithmeticExpr>) (nodeIn: Node) (nodeOut: Node) =
+                    match assigns with
+                    | (id,_)::tail -> let location = Field(strct, id)
+                                      let newMap = performKillGenAction mapIn location nodeIn nodeOut
+                                      recursiveKillGen mapIn strct tail nodeIn nodeOut
+                                                      
+                    | [] -> mapIn
+                
+                let (strct, assigns) = assignLiteral
+                let newMap = recursiveKillGen this.states.[nodeIn] strct assigns nodeIn nodeOut                
+                
+                let (mapUpdated, modified) = updateMapWithDifferences newMap this.states.[nodeOut] this.keys false
+                
+                if modified = true then
+                    this.states.[nodeOut] = mapUpdated
                     [nodeOut]
+                else
+                    []                    
+                
+            member this.updateCondition (nodeIn, _, nodeOut) = 
+                let (mapUpdated, modified) = updateMapWithDifferences this.states.[nodeIn] this.states.[nodeOut] this.keys false
+                                
+                if modified = true then
+                    this.states.[nodeOut] = mapUpdated
+                    [nodeOut]
+                else
+                    []
                     
             member this.updateRead (nodeIn, read, nodeOut) =
-                let inList = this.states.[nodeIn]
-                let killedList = killAction inList read
-                let newList = genAction killedList read nodeIn nodeOut
+                let newMap = performKillGenAction this.states.[nodeIn] read nodeIn nodeOut                
                 
-                let diff = findDifferences newList this.states.[nodeOut]
+                let (mapUpdated, modified) = updateMapWithDifferences newMap this.states.[nodeOut] this.keys false
                 
-                if diff.Length = 0 then
-                    []
-                else
-                    this.states.[nodeOut] = diff@(this.states.[nodeOut])
+                if modified = true then
+                    this.states.[nodeOut] = mapUpdated
                     [nodeOut]
+                else
+                    []               
         
             member this.updateWrite (nodeIn, _, nodeOut) =
-                let diff = findDifferences this.states.[nodeIn] this.states.[nodeOut] 
-                if diff.Length = 0 then
-                    []
-                else
-                    this.states.[nodeOut] = diff@(this.states.[nodeOut])
+                let (mapUpdated, modified) = updateMapWithDifferences this.states.[nodeIn] this.states.[nodeOut] this.keys false
+                                
+                if modified = true then
+                    this.states.[nodeOut] = mapUpdated
                     [nodeOut]
-        
+                else
+                    []
             member this.printSolution =
                 "Not implemented"
     

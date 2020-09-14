@@ -6,6 +6,9 @@ open FrontEnd.ProgramGraph
 
 module AnalysisDefinition =
     type IAlgorithm =
+        
+        abstract member isReverse: bool
+        
         abstract member initialise: graph: Graph -> declaration: List<Declaration> -> List<Node>
         //default this.initialise graph declaration =
         //    failwith "Not implemented"
@@ -45,14 +48,16 @@ module AnalysisDefinition =
             | [] -> listOut
         foldEdges edges []
     
-    let rec updateFrontier (new_entries: List<Node>) (new_frontier: List<Node>) =
-        match new_entries with
-        | head :: tail -> if List.contains head new_entries then
-                              updateFrontier tail new_frontier
-                          else
-                              updateFrontier tail (head::new_frontier)
-        | [] -> new_frontier
-    
+    let getInEdges (node : Node) (edges : List<Edge>) =
+        let rec foldEdges (list: List<Edge>)  (listOut: List<Edge>) =
+            match list with
+            | (nodeIn, action, nodeOut) :: tail -> if nodeOut = node then
+                                                       foldEdges tail ((nodeIn, action, nodeOut)::listOut)
+                                                   else
+                                                       foldEdges tail listOut
+            | [] -> listOut
+        foldEdges edges []
+        
     let rec runEdges (edges: List<Edge>) (outNodes : List<Node>) (algorithm : IAlgorithm) =
         match edges with
         | (nodeIn, action, nodeOut) :: tail->
@@ -64,22 +69,34 @@ module AnalysisDefinition =
              | Write w -> runEdges tail (outNodes@(algorithm.updateWrite (nodeIn, w, nodeOut))) algorithm
         | [] -> outNodes
         
-    let rec run ((nodes, edges) : Graph) (frontier : List<Node>) (algorithm : IAlgorithm) =
-        let outEdges = getOutEdges frontier.Head edges
+    let rec run ((nodes, edges) : Graph) (frontier : Set<Node>) (algorithm : IAlgorithm) =
+        if frontier.IsEmpty then
+            algorithm
+        else
+            let node = Set.minElement frontier
+            let outEdges = getOutEdges node edges
+            let frontierRemoved = frontier.Remove node
+            let newFrontier = Set.union frontierRemoved (Set.ofList(runEdges outEdges [] algorithm))
+            run (nodes, edges) newFrontier algorithm
         
-        let newFrontierElements = runEdges outEdges [] algorithm
-        let newFrontier = updateFrontier newFrontierElements frontier.Tail
+    let rec runReverse ((nodes, edges) : Graph) (frontier : Set<Node>) (algorithm : IAlgorithm) =
+        let node = Set.minElement frontier
+        let outEdges = getInEdges node edges
+        let frontierRemoved = frontier.Remove node
+        let newFrontier = Set.union frontierRemoved (Set.ofList(runEdges outEdges [] algorithm))
         run (nodes, edges) newFrontier algorithm
-        
-        
-        
+    
     let Analyse (graph : Graph) (declarations : List<Declaration>) (algorithm : IAlgorithm) =
       
-      let frontier = algorithm.initialise graph declarations
+      let frontier = Set.ofList (algorithm.initialise graph declarations)
+    
+      if algorithm.isReverse then  
+          let solution = runReverse graph frontier algorithm
+          solution.printSolution 
+      else
+          let solution = run graph frontier algorithm
+          solution.printSolution 
       
-      run graph frontier algorithm
-      
-      algorithm.printSolution 
       
       
       
