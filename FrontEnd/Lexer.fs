@@ -19,7 +19,7 @@ module Lexer =
             let pos = currentPos ctx
             let span = { From = pos; To = pos+1; }
             ((token, span)::tokens, tail (tail ctx))
-        else failwithf "%c followed by unexpected %c" (head ctx) (head (tail ctx))
+        else failwithf "'%c' followed by unexpected '%c'" (head ctx) (head (tail ctx))
         
     let lexInteger (tokens: Token List) (ctx: LexingContext) =
         let from_pos = currentPos ctx
@@ -64,7 +64,9 @@ module Lexer =
     
     let rec Scan ((tokens : Token List), (ctx : LexingContext)) = 
         if isDone ctx then
-            (List.rev tokens, "")
+            let eof_span = { From = snd ctx; To = snd ctx; }
+            let eof_token = (EOF, eof_span)
+            (List.rev (eof_token::tokens), "")
         else
             match head ctx with
             | ' ' | '\t' | '\n' | '\r' -> Scan (tokens, tail ctx)
@@ -83,23 +85,24 @@ module Lexer =
             | '.' -> Scan (lexSingle DOT tokens ctx)
             | ',' -> Scan (lexSingle COMMA tokens ctx)
             | '<' -> Scan (
-                            match head ctx with
+                            match head (tail ctx) with
                             | '=' -> (lexSingle LESSER_EQUAL tokens (tail ctx))
                             | _ -> (lexSingle LESSER tokens ctx)
                             )
             | '>' -> Scan (
-                            match head ctx with
+                            match head (tail ctx) with
                             | '=' -> (lexSingle GREATER_EQUAL tokens (tail ctx))
                             | _ -> (lexSingle GREATER tokens ctx)
                             )
             | '!' -> Scan (
-                            match head ctx with
+                            match head (tail ctx) with
                             | '=' -> (lexSingle NOT_EQUAL tokens (tail ctx))
                             | _ -> (lexSingle NOT tokens ctx)
                             )
             | ':' -> Scan (lexDouble '=' ASSIGN tokens ctx)
             | '|' -> Scan (lexDouble '|' OR tokens ctx)
             | '&' -> Scan (lexDouble '&' AND tokens ctx)
+            | '=' -> Scan (lexDouble '=' EQUAL tokens ctx)
             | c -> if System.Char.IsLetter(c) then Scan (lexIdentifier tokens ctx)
                    else if System.Char.IsDigit(c) then Scan (lexInteger tokens ctx)
                    else failwithf "Unknown character '%c'" c

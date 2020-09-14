@@ -13,6 +13,7 @@ let lexReadWrite () =
       (WRITE, {From = 12; To = 16});
       (IDENTIFIER("world"), {From = 18; To = 22});
       (SEMI_COLON, {From = 23; To = 23});
+      (EOF, {From = 24; To = 24});
     ]
     let tokens = Lexer.lex code
     Assert.That(List.toArray tokens, Is.EqualTo(List.toArray expected))
@@ -38,6 +39,7 @@ let lexArithmetic () =
       (RIGHT_SQUARE, {From = 18; To = 18});
       (RIGHT_PAREN, {From = 19; To = 19});
       (SEMI_COLON, {From = 20; To = 20});
+      (EOF, {From = 21; To = 21});
     ]
     let tokens = Lexer.lex code
     Assert.That(List.toArray tokens, Is.EqualTo(List.toArray expected))
@@ -52,6 +54,7 @@ let lexKeywords () =
       (IF, {From = 15; To = 16});
       (ELSE, {From = 18; To = 21});
       (WHILE, {From = 23; To = 27});
+      (EOF, {From = 28; To = 28});
     ]
     let tokens = Lexer.lex code
     Assert.That(List.toArray tokens, Is.EqualTo(List.toArray expected))
