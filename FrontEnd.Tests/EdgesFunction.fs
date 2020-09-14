@@ -4,19 +4,34 @@ open FrontEnd.EdgesFunction;
 open FrontEnd.AST;
 
 let main =
-    let ast = ([], [
-        Statement.Assign(Location.Identifier "a", ArithmeticExpr.IntLiteral 10) ;
-        Statement.Assign(Location.Identifier "y", ArithmeticExpr.IntLiteral 1) ;
-        Statement.While (
-            Comparison ((Loc (Identifier "x")), Greater, IntLiteral 0),
-            ([],[
-                Statement.Assign(Location.Identifier "y", ArithmeticBinary ((Loc (Identifier "x")), Multiply, (Loc (Identifier "y")))) ;
-                Statement.Assign(Location.Identifier "x", ArithmeticBinary ((Loc (Identifier "x")), Subtract, (IntLiteral 1)))
-            ])
-        ) ;
-        Statement.Assign(Location.Identifier "b", ArithmeticExpr.IntLiteral 10)
-    ])
+    //If-Then Test
+    //let ast = ([], [
+    //    Statement.Assign(Location.Identifier "a", ArithmeticExpr.IntLiteral 10) ;
+    //    Statement.If(
+    //        Comparison ((Loc (Identifier "x")), Greater, (Loc (Identifier "y"))),
+    //        ([],[
+    //            Statement.Assign(Location.Identifier "x", ArithmeticBinary ((Loc (Identifier "x")), Subtract, (IntLiteral 1)))
+    //        ]),
+    //        None
+    //    ) ;
+    //    Statement.Assign(Location.Identifier "b", ArithmeticExpr.IntLiteral 10)
+    //])
     
+    //While Test
+    //let ast = ([], [
+    //    Statement.Assign(Location.Identifier "a", ArithmeticExpr.IntLiteral 10) ;
+    //    Statement.Assign(Location.Identifier "y", ArithmeticExpr.IntLiteral 1) ;
+    //    Statement.While (
+    //        Comparison ((Loc (Identifier "x")), Greater, IntLiteral 0),
+    //        ([],[
+    //            Statement.Assign(Location.Identifier "y", ArithmeticBinary ((Loc (Identifier "x")), Multiply, (Loc (Identifier "y")))) ;
+    //            Statement.Assign(Location.Identifier "x", ArithmeticBinary ((Loc (Identifier "x")), Subtract, (IntLiteral 1)))
+    //        ])
+    //    ) ;
+    //    Statement.Assign(Location.Identifier "b", ArithmeticExpr.IntLiteral 10)
+    //])
+    
+    //If-Then-Else Test
     //let ast = ([], [
     //    Statement.Assign(Location.Identifier "a", ArithmeticExpr.IntLiteral 10) ;
     //    Statement.If(
@@ -30,5 +45,25 @@ let main =
     //    ) ;
     //    Statement.Assign(Location.Identifier "b", ArithmeticExpr.IntLiteral 10)
     //])
+    
+    //Inner If-Then-Else Test
+    let ast = ([], [
+        Statement.Assign(Location.Identifier "y", ArithmeticExpr.IntLiteral 1) ;
+        Statement.While (
+            Comparison ((Loc (Identifier "x")), Greater, IntLiteral 0),
+            ([],[
+                Statement.If(
+                    Comparison ((Loc (Identifier "x")), Greater, (Loc (Identifier "y"))),
+                    ([],[
+                        Statement.Assign(Location.Identifier "x", ArithmeticBinary ((Loc (Identifier "x")), Subtract, (IntLiteral 1)))
+                        ]),
+                    Some ([],[
+                        Statement.Assign(Location.Identifier "y", ArithmeticBinary ((Loc (Identifier "y")), Subtract, (IntLiteral 1)))
+                        ])
+                    ) ;
+            ])
+        ) ;
+        Statement.Assign(Location.Identifier "b", ArithmeticExpr.IntLiteral 10)
+    ])
     
     runEdges ast 
