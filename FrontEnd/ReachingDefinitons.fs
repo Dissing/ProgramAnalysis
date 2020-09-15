@@ -1,5 +1,4 @@
 namespace FrontEnd
-open System.Globalization
 open AnalysisDefinition
 open ProgramGraph
 open AST
