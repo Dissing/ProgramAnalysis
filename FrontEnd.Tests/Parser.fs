@@ -1,6 +1,7 @@
 ﻿module FrontEnd.Tests.Parser
 
 open FrontEnd
+open FrontEnd.AST
 open NUnit.Framework
 
 [<Test>]
@@ -151,6 +152,53 @@ let parseArrayDecl() =
     let d4 = AST.ArrayDecl("z", 2147483647)
     
     let expected = ([d1; d2; d3; d4],[])
+    Assert.That(ast, Is.EqualTo(expected))
+    
+[<Test>]
+let parseStructLiteral() =
+    let source = SourceFile("parseStructLiteral.c", "foo := {2+2, A[0], strct.fld};")
+    let ast = Parser.parse source (Lexer.lex source.Content)
+    
+    let a1 = AST.ArithmeticBinary((AST.IntLiteral 2), AST.Add, (AST.IntLiteral 2))
+    let a2 = AST.Loc( AST.Array("A", AST.IntLiteral 0))
+    let a3 = AST.Loc( AST.Field("strct", "fld"))
+    
+    let assign = AST.StructAssign("foo", [("", a1); ("", a2); ("", a3)])
+    
+    let expected = ([],[assign])
+    
+    Assert.That(ast, Is.EqualTo(expected))
+    
+[<Test>]
+let parseStructDecl() =
+    let source = SourceFile("parseStructDecl.c", "int x; {int x; int y; int z } strct; int y;")
+    let ast = Parser.parse source (Lexer.lex source.Content)
+    
+    let di1 = AST.Integer "x"
+    let di2 = AST.Integer "y"
+    
+    let fx = ("int", "x")
+    let fy = ("int", "y")
+    let fz = ("int", "z")
+    
+    let ds = AST.Struct ("strct", [fx;fy;fz])
+    
+    let expected = ([di1; ds; di2],[])
+    
+    Assert.That(ast, Is.EqualTo(expected))
+ 
+    
+[<Test>]
+let parseFieldAccess() =
+    let source = SourceFile("parseFieldAccess.c", "x := strct.fld + 1; if (x.fst > y.snd) { x := 0; }")
+    let ast = Parser.parse source (Lexer.lex source.Content)
+    let assign = AST.Assign ((AST.Identifier "x"), AST.ArithmeticBinary(AST.Loc (AST.Field("strct", "fld")), AST.Add, AST.IntLiteral 1))
+    let condition = AST.Comparison (AST.Loc (AST.Field("x","fst")), AST.Greater, AST.Loc (AST.Field("y", "snd")))
+    let then_block = ([], [AST.Assign(AST.Identifier "x", AST.IntLiteral 0)])
+    let expected = ([],[
+        assign; AST.If(condition, then_block, None)
+    ])
+    
     Assert.That(ast, Is.EqualTo(expected))
     
 [<Test>]

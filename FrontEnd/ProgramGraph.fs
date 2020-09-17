@@ -5,7 +5,7 @@ open FrontEnd.AST
 module ProgramGraph =
     type Action =
         | Assign of Location * ArithmeticExpr
-        | AssignLiteral of Ident * (Field * ArithmeticExpr) List
+        | AssignLiteral of Ident * (Ident * ArithmeticExpr) List
         | Condition of BooleanExpr
         | Read of Location
         | Write of ArithmeticExpr
