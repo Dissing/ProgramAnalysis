@@ -69,9 +69,13 @@ module Parser =
                 | IDENTIFIER(_) ->
                     let (ctx, location) = parseLocation ctx
                     let ctx = expect ASSIGN ctx
-                    let (ctx, rhs) = parseArithmeticExpr ctx
+                    let (ctx, stmt) =
+                        if kindOfHead ctx = LEFT_CURLY then
+                            parseStructLiteral location ctx
+                        else
+                            let (ctx, rhs) = parseArithmeticExpr ctx
+                            (ctx, Assign (location, rhs))
                     let ctx = expect SEMI_COLON ctx
-                    let stmt = Assign (location, rhs)
                     parseItems (ctx, (decls, stmt::stmts))
                 | INT ->
                     //Skip over the initial int
@@ -134,11 +138,47 @@ module Parser =
         let ctx = expect SEMI_COLON ctx
         (ctx, Statement.Write expr)
     and parseStructDecl (ctx: ParsingContext) =
-        failwith "Not yet implemented"
+        let ctx = expect LEFT_CURLY ctx
+        let rec fieldHelper ctx fields =
+            match kindOfHead ctx with
+            | INT ->
+                let ctx = expect INT ctx
+                let (ctx, ident) = parseIdent ctx
+                let (ctx, found_semi) = accept SEMI_COLON ctx
+                let fields = ("int", ident)::fields
+                if found_semi then 
+                    fieldHelper ctx fields
+                else
+                    let ctx = expect RIGHT_CURLY ctx
+                    (ctx, List.rev fields)
+            | other ->
+                failwithf "Unexpected token found in Struct Declaration %A" other
+                
+        let (ctx, fields) = fieldHelper ctx []
+        let (ctx, strctName) = parseIdent ctx
+        let ctx = expect SEMI_COLON ctx
+        let strct = Struct (strctName, fields)
+        (ctx, strct)
     and parseIdent (ctx: ParsingContext) =
         match kindOfHead ctx with
         | IDENTIFIER(s) -> (tail ctx, s)
         | other -> failwithf "Expected identifier but found %A " other
+        
+    and parseStructLiteral (dest: Location) (ctx: ParsingContext) =
+        let rec helper ctx fields =
+            let (ctx, expr) = parseArithmeticExpr ctx
+            let (ctx, found_comma) = accept COMMA ctx
+            let fields = ("", expr)::fields
+            if found_comma then
+                helper ctx fields
+            else
+                (ctx, List.rev fields)
+        let ctx = expect LEFT_CURLY ctx
+        let (ctx, fields) = helper ctx []
+        let ctx = expect RIGHT_CURLY ctx
+        match dest with
+        | Identifier(ident) -> (ctx, StructAssign(ident, fields))
+        | other -> failwithf "Can only assign struct literals to variables and not %A" other
         
         
     and parseLocation (ctx: ParsingContext) =
