@@ -7,7 +7,12 @@
 
     <ItemGroup>
         <Compile Include="ArgumentParser.fs" />
+        <Compile Include="Config.fs" />
         <Compile Include="Program.fs" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\FrontEnd\FrontEnd.fsproj" />
     </ItemGroup>
 
 </Project>
