@@ -5,7 +5,7 @@ open FrontEnd.AST
 module ProgramGraph =
     
     type AssignExpr = Location * ArithmeticExpr
-    type AssignLiteralExpr = Ident * (Field * ArithmeticExpr) List
+    type AssignLiteralExpr = Ident * (Ident * ArithmeticExpr) List
     
     type Action =
         | Assign of AssignExpr
