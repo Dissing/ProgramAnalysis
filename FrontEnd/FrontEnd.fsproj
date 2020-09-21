@@ -13,6 +13,7 @@
         <Compile Include="Parser.fs" />
         <Compile Include="ProgramGraph.fs" />
         <Compile Include="EdgesFunction.fs" />
+        <Compile Include="Printer.fs" />
     </ItemGroup>
 
 </Project>
