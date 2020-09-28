@@ -7,7 +7,7 @@ open NUnit.Framework
 
 
 
-(*
+
 [<Test>]
 let EdgesIfThen () =
     let ast = ([], [
@@ -141,8 +141,8 @@ let EdgesWhileIfThenElseExtended () =
     let (nodes, edges) = EdgesFunction.runEdges ast
     Assert.That(List.toArray nodes, Is.EqualTo(List.toArray expectedNodes)) //Would rather test if they contain the same
     Assert.That(List.toArray edges, Is.EqualTo(List.toArray expectedEdges))
-*)
 
+(*
 let main =
     //Printer Test
     let (res, _) = FrontEnd.Printer.BooleanPrinter "" (BooleanBinary ((BooleanBinary (BooleanUnary (Not, BooleanLiteral true), Or, BooleanLiteral true)), And, (BooleanBinary (BooleanLiteral true, Or, BooleanUnary (Not, BooleanLiteral false)))))
@@ -296,4 +296,4 @@ let main =
     //])
     
     //EdgesFunction.runEdges ast
-    
+    *)
