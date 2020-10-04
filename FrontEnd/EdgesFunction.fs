@@ -101,7 +101,8 @@ module EdgesFunction =
                 else
                     let nList = nodeIndex :: nList
                     let eList = (startNode, Read loc, nodeIndex) :: eList
-                    edges tail nodeIndex (nodeIndex+1) endNode nList eList           
+                    edges tail nodeIndex (nodeIndex+1) endNode nList eList
+                   
             | Statement.Write(aExpr) :: tail ->
                 if tail.IsEmpty && endNode <> -1 then
                     let eList = (startNode, Write aExpr, endNode) :: eList
@@ -114,8 +115,7 @@ module EdgesFunction =
     let runEdges (ast : AST) =
         let (_, stmts) = ast
         let (_, nList, eList) = edges stmts 0 1 -1 [0] []
-        printfn "%A" (List.rev nList)
-        printfn "%A" (List.rev eList)
+        
         (List.rev nList, List.rev eList)
      
 
