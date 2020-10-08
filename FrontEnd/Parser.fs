@@ -4,11 +4,11 @@ open FrontEnd.AST
 
 module Parser =
     
-    type ParsingContext = SourceFile * Token List
+    type ParsingContext = Token List
     
-    let head (ctx: ParsingContext) = (snd ctx).Head
-    let tail (ctx: ParsingContext) = (fst ctx, (snd ctx).Tail)
-    let kindOfHead (ctx: ParsingContext) = fst (snd ctx).Head
+    let head (ctx: ParsingContext) = ctx.Head
+    let tail (ctx: ParsingContext) = ctx.Tail
+    let kindOfHead (ctx: ParsingContext) = fst ctx.Head
     let isDone (ctx: ParsingContext) = (kindOfHead ctx) = EOF
     
     let accept (kind: TokenKind) (ctx: ParsingContext) =
@@ -278,7 +278,7 @@ module Parser =
           | B(b) -> (ctx, b)
           | A(a) -> failwithf "Expected boolean expression but got pure arithmetic expression %A" a
     
-    let parse (source: SourceFile) (tokens: Token List) =
-        let ctx = (source, tokens)
+    let parse (tokens: Token List) =
+        let ctx = tokens
         let (_, ast) = parseItems (ctx, ([],[]))
-        ast
+        Ok(ast)

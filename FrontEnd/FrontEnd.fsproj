@@ -6,6 +6,7 @@
 
     <ItemGroup>
         <Compile Include="Span.fs" />
+        <Compile Include="Context.fs" />
         <Compile Include="SourceFile.fs" />
         <Compile Include="Tokens.fs" />
         <Compile Include="AST.fs" />
