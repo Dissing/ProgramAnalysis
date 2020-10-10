@@ -2,7 +2,7 @@
 
 type Context<'state> =
         | Ok of 'state
-        | Error of string * int
+        | Error of string * Span
 
 type ContextBuilder() =
         member __.Return(a) = Ok(a)
@@ -21,7 +21,7 @@ type ContextBuilder() =
         member __.unwrap(m) =
             match m with
             | Ok(s) -> s
-            | Error (msg, i) -> failwithf "Unwrapped error %s at %d" msg i
+            | Error (msg, span) -> failwithf "Unwrapped error %s at [%d:%d]" msg span.From span.To
             
 [<AutoOpen>]
 module ContextBuilderImpl =

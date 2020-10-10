@@ -16,6 +16,7 @@
         <Compile Include="ProgramGraph.fs" />
         <Compile Include="EdgesFunction.fs" />
         <Compile Include="Printer.fs" />
+        <Compile Include="Resolution.fs" />
     </ItemGroup>
 
 </Project>

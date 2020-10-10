@@ -18,6 +18,7 @@
         <Compile Include="Lexer.fs" />
         <Compile Include="EdgesFunction.fs" />
         <Compile Include="Printer.fs" />
+        <Compile Include="Resolution.fs" />
     </ItemGroup>
 
     <ItemGroup>

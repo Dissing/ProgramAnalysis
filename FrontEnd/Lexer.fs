@@ -6,12 +6,10 @@ module Lexer =
         { Content: string
           CurrentPosition: int }
 
-    type LexingContext = Context<LexingState>
-
     let head (s: LexingState) =
         if s.CurrentPosition < s.Content.Length
         then Ok(s.Content.[s.CurrentPosition])
-        else Error("ICE: Lexer out of bounds!", s.CurrentPosition)
+        else Error("ICE: Lexer out of bounds!", {From = s.CurrentPosition; To = s.CurrentPosition})
 
     let consume (s: LexingState) =
         Ok
@@ -43,7 +41,7 @@ module Lexer =
                 let err_msg =
                     sprintf "'%c' followed by unexpected '%c' instead of expected '%c'" firstChar nextChar expected
 
-                return! Error(err_msg, consumedFirst.CurrentPosition)
+                return! Error(err_msg, span)
         }
 
     let lexConditionalDouble (condition: char)
@@ -137,7 +135,7 @@ module Lexer =
                     | c ->
                         if System.Char.IsLetter(c) then lexIdentifier tokens s
                         else if System.Char.IsDigit(c) then lexInteger tokens s
-                        else failwithf "Unknown character '%c'" c
+                        else Error(sprintf "Unknown character '%c'" c, {From = s.CurrentPosition; To = s.CurrentPosition})
 
                 return! Scan(updatedTokens, consumedState)
             }
