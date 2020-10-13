@@ -47,10 +47,10 @@ module Printer =
             let (inner, paren) = ArithmeticPrinter "" expr
             if paren then
                 let output = output + "-(" + inner + ")"
-                (output, false)
+                (output, true)
             else
                 let output = output + "-" + inner
-                (output, false)
+                (output, true)
         | ArithmeticBinary (leftExpr, binary, rightExpr) ->
             let (leftInner, leftParen) = ArithmeticPrinter "" leftExpr
             let (rightInner, rightParen) = ArithmeticPrinter "" rightExpr
