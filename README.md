@@ -1,10 +1,5 @@
 # ProgramAnalysis02242
 
-## Open Collaborative Tasks:
-
-### Define ProgramGraph
-
-
 ## Open Individual Tasks:
 
 ### Integration Testing Setup
@@ -24,10 +19,12 @@ Assignee:
 Assignee: Thomas
 - Implement the edges functions transforming the AST into the program graph
 
-
-### Parser
+### Local Scope / Resolution Pass
 Assignee: Lasse
-- Complete parser
+
+### Compiler Driver
+Assignee: Lasse
+- A main entry point which in a flexible manner can drive the parsing and analysis process
 
 ### Reaching Definitions
 Assignee: Nicolai
@@ -41,5 +38,5 @@ Assignee: Thomas
 
 ## Future Tasks:
 
-### Local Scope
-Depends on: Parser
+### Proper Error Handling
+- Requires extensions to the AST and ProgramGraph. It is therefore best postponed until the stabilization of the control flow analysis.

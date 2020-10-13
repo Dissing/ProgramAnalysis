@@ -11,7 +11,10 @@
         <Compile Include="AST.fs" />
         <Compile Include="Lexer.fs" />
         <Compile Include="Parser.fs" />
+        <Compile Include="Printer.fs" />
         <Compile Include="ProgramGraph.fs" />
+        <Compile Include="EdgesFunction.fs" />
+        <Compile Include="Printer.fs" />
         <Compile Include="AnalysisDefinition.fs" />
         <Compile Include="ReachingDefinitons.fs" />
         <Compile Include="LiveVariables.fs" />

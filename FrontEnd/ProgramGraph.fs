@@ -8,8 +8,8 @@ module ProgramGraph =
     type AssignLiteralExpr = Ident * (Ident * ArithmeticExpr) List
     
     type Action =
-        | Assign of AssignExpr 
-        | AssignLiteral of AssignLiteralExpr 
+        | Assign of AssignExpr
+        | AssignLiteral of AssignLiteralExpr
         | Condition of BooleanExpr
         | Read of Location
         | Write of ArithmeticExpr

@@ -16,6 +16,8 @@
     <ItemGroup>
         <Compile Include="Parser.fs" />
         <Compile Include="Lexer.fs" />
+        <Compile Include="EdgesFunction.fs" />
+        <Compile Include="Printer.fs" />
     </ItemGroup>
 
     <ItemGroup>
