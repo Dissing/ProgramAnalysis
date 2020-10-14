@@ -13,7 +13,7 @@ open FrontEnd.AST
 module Resolution =
 
     type FreshId = int
-    type Scope = Map<string, Declaration>
+    type Scope = (string * Declaration) list
     type Stack = Scope list
     type ResolutionState = Stack * FreshId
 
@@ -22,24 +22,35 @@ module Resolution =
 
     let add ((stack, fresh): ResolutionState) (ident: Ident) (decl: Declaration) =
         match stack with
-        | x :: xs -> (x.Add(ident, decl) :: xs, fresh)
+        | scope :: scopes -> (((ident, decl) :: scope) :: scopes, fresh)
         | [] -> failwithf "ICE: Empty stack when trying to add ident %s" ident
 
-    let push ((stack, fresh): ResolutionState) = (Map.empty :: stack, fresh)
+    let push ((stack, fresh): ResolutionState) = ([] :: stack, fresh)
 
     let pop ((stack, fresh): ResolutionState) =
         match stack with
-        | x :: xs -> (xs, fresh)
+        | x :: xs -> ((xs, fresh), x)
         | [] -> failwithf "ICE: Empty stack when trying to pop"
+
+    let rec tryFind ident =
+        function
+        | (x, d) :: xs when x = ident -> Some(d)
+        | (x, d) :: xs -> tryFind ident xs
+        | [] -> None
 
     let rec lookup (stack: Stack) (ident: Ident) =
         match stack with
         | scope :: scopes ->
-            match scope.TryFind(ident) with
+            match tryFind ident scope with
             | Some (x) -> Some(x)
             | None -> lookup scopes ident
         | [] -> None
 
+    let nameOfDecl =
+        function
+        | Integer (ident) -> ident
+        | ArrayDecl (ident, _) -> ident
+        | Struct (ident, _) -> ident
 
     let rec resolveLocation ((stack, fresh): ResolutionState) (loc: Location) =
         let span = { From = 0; To = 0 }
@@ -136,19 +147,14 @@ module Resolution =
                 return (s, decl)
             }
 
-    and resolveDecls (s: ResolutionState) =
-        function
-        | d :: ds ->
-            context {
-                let! (s, decl) = resolveDecl s d
-                let! (s, decls) = resolveDecls s ds
-                return (s, decl :: decls)
-            }
-        | [] -> Ok((s, []))
-
 
     let rec resolveStmt (s: ResolutionState) =
         function
+        | Allocate decl ->
+            context {
+                let! (s, decl) = resolveDecl s decl
+                return (s, Allocate(decl))
+            }
         | Assign (loc, expr) ->
             context {
                 let! (s, loc) = resolveLocation s loc
@@ -168,19 +174,22 @@ module Resolution =
                         | Some (Struct (name, field_names)) -> return (s, name, field_names)
                         | None -> return! Error(sprintf "Used of undeclared struct %s" ident, span)
                     }
-                let fields = List.map (fun ((_,expr), (_,name)) -> (name,expr)) (List.zip fields field_names)
-                    
+
+                let fields =
+                    List.map (fun ((_, expr), name) -> (name, expr)) (List.zip fields field_names)
+
                 let rec helper =
                     function
                     | (s, (ident, expr) :: xs) ->
                         context {
                             let! (s, expr') = resolveArithmeticExpr s expr
                             let! (s, xs') = helper (s, xs)
-                            return (s, (ident, expr') :: xs')   
+                            return (s, (ident, expr') :: xs')
                         }
                     | (s, []) -> Ok((s, []))
 
                 let! (s, fields) = helper (s, fields)
+
                 return (s, StructAssign(ident, fields))
             }
         | If (cond, thenBlock, elseBlock) ->
@@ -215,6 +224,7 @@ module Resolution =
                 let! (s, expr) = resolveArithmeticExpr s expr
                 return (s, Write expr)
             }
+        | Free (ident) -> failwithf "ICE: Free(%s) Stmt found during resolution!" ident
 
     and resolveStmts (s: ResolutionState) =
         function
@@ -226,18 +236,40 @@ module Resolution =
             }
         | [] -> Ok((s, []))
 
-    and resolveBlock (s: ResolutionState) (decls: Declaration list, stmts: Statement list) =
+    and resolveBlock (s: ResolutionState) (stmts: Block) =
         context {
             let s = push s
-            let! (s, decls) = resolveDecls s decls
             let! (s, stmts) = resolveStmts s stmts
-            let s = pop s
-            return (s, (decls, stmts))
+            let (s, scope) = pop s
+
+            let free_stmts =
+                List.map (fun (_, decl) -> Free(nameOfDecl decl)) scope
+
+            return (s, stmts @ free_stmts)
         }
 
-    let resolve (ast: AST) =
+    let rec extractDecls (decls: DeclarationInfo) =
+        function
+        | Allocate (decl) :: stmts -> extractDecls (decls.Add(nameOfDecl decl, decl)) stmts
+        | If (_, thenBlock, elseBlock) :: stmts ->
+            let decls = extractDecls decls thenBlock
+
+            let decls =
+                match elseBlock with
+                | Some (b) -> extractDecls decls b
+                | None -> decls
+
+            extractDecls decls stmts
+        | While (_, loopBlock) :: stmts ->
+            let decls = extractDecls decls loopBlock
+            extractDecls decls stmts
+        | _ :: stmts -> extractDecls decls stmts
+        | [] -> decls
+
+    let resolve (root: Block) =
         context {
             let s = push ([], 1)
-            let! (_, ast) = resolveBlock s ast
-            return ast
+            let! (_, root) = resolveBlock s root
+            let decls = extractDecls Map.empty root
+            return (decls, root)
         }
