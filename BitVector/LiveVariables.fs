@@ -1,8 +1,8 @@
-namespace FrontEnd
+namespace BitVector 
 open System.Globalization
 open AnalysisDefinition
-open ProgramGraph
-open AST
+open FrontEnd.ProgramGraph
+open FrontEnd.AST
 
 module LiveVariables =
     
@@ -120,6 +120,9 @@ module LiveVariables =
 
             member this.printSolution =
                 "Not implemented"
+                
+            member this.getSolution =
+                []
     
-    
+                
 

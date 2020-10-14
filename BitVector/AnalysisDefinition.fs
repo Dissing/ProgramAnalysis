@@ -1,4 +1,4 @@
-namespace FrontEnd
+namespace BitVector
 
 open System.Globalization
 open FrontEnd.AST
@@ -36,6 +36,8 @@ module AnalysisDefinition =
         abstract member printSolution: string        
         //default this.printSolution =
         //    failwith "Not implemented"
+        
+        abstract member getSolution: List<string>
     
     
     let getOutEdges (node : Node) (edges : List<Edge>) =

@@ -15,9 +15,6 @@
         <Compile Include="ProgramGraph.fs" />
         <Compile Include="EdgesFunction.fs" />
         <Compile Include="Printer.fs" />
-        <Compile Include="AnalysisDefinition.fs" />
-        <Compile Include="ReachingDefinitons.fs" />
-        <Compile Include="LiveVariables.fs" />
     </ItemGroup>
 
 </Project>

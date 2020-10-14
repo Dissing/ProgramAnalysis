@@ -1,8 +1,8 @@
-namespace FrontEnd
+namespace BitVector 
 open AnalysisDefinition
-open ProgramGraph
-open AST
-
+open FrontEnd.ProgramGraph
+open FrontEnd.AST
+open System.Text
 module ReachingDefinitions =
     
     type RDVarState =
@@ -75,8 +75,33 @@ module ReachingDefinitions =
                                updateMapWithDifferences mapIn mapOut tail modified
             | [] -> (mapOut, modified)
             
+        
+        let createRDString var =
+            match var with
+            | UnmodifiedStandard ident -> sprintf "(%s, ?, q0)" ident
+            | UnmodifiedArray ident -> sprintf "(%s, ?, q0)" ident
+            | UnmodifiedField (strct, ident) -> sprintf "(%s.%s, ?, q0)" strct ident
+            | ModifiedStandard (ident, nin, nout) -> sprintf "(q%d, %s, q%d)" nin ident nout
+            | ModifiedArray (ident, nin, nout) -> sprintf "(q%d, %s, q%d)" nin ident nout
+            | ModifiedField ((strct, ident), nin, nout) -> sprintf "(q%d, %s.%s, q%d)" nin strct ident nout
+            
+        let rec createRDStrings (rdStrings: List<RDVarState>) (results: List<string>) =
+            match rdStrings with
+            | [] -> results
+            | head::tail -> createRDStrings tail ((createRDString head)::results)
+        
+        let rec createSolutionRec (keys: List<string>) (states: Map<string, Set<RDVarState>>) (results: List<string>) =
+            match keys with
+            | [] -> results
+            | head :: tail -> createSolutionRec tail states (results@( createRDStrings (Set.toList (states.[head])) []))
+        
         let mutable states: (Map<string, Set<RDVarState>>)[] = [||]
         let mutable keys: List<string> = []
+        
+        let mutable nodeLength: int = 0
+        
+        
+        member this.getSolution() = (this :> IAlgorithm).getSolution
         
         interface IAlgorithm with
         
@@ -85,9 +110,11 @@ module ReachingDefinitions =
             member this.initialise graph declaration =
                 let nodes = fst graph
                 
-                states <- Array.create (nodes.Length) (Map.empty)
+                nodeLength <- nodes.Length
                 
-                let rec parseFields (id: Ident) (fields: List<FieldDeclaration>) (map: Map<string, Set<RDVarState>>) (keys: List<string>) =
+                states <- Array.create (nodeLength) (Map.empty)
+                
+                let rec parseFields (id: Ident) (fields: List<FieldDeclaraction>) (map: Map<string, Set<RDVarState>>) (keys: List<string>) =
                     match fields with
                     | head :: tail -> let key = createFieldString id (snd head)
                                       parseFields id tail (map.Add (key, Set([UnmodifiedField((id, (snd head)))]))) (key::keys)
@@ -96,7 +123,7 @@ module ReachingDefinitions =
                     match dList with
                     | head :: tail -> match head with
                                        | Integer id -> parseDeclaration tail (map.Add (id, Set([UnmodifiedStandard(id)]))) (id::keys)
-                                       | Array (id, _) -> parseDeclaration tail (map.Add (id, Set([UnmodifiedArray(id)]))) (id::keys)
+                                       | ArrayDecl (id, _) -> parseDeclaration tail (map.Add (id, Set([UnmodifiedArray(id)]))) (id::keys)
                                        | Struct (id, fields) -> let (newMap, newKeys) = parseFields id fields map keys
                                                                 parseDeclaration tail newMap newKeys
                     | [] -> (map, keys)
@@ -171,5 +198,9 @@ module ReachingDefinitions =
                     []
             member this.printSolution =
                 "Not implemented"
-    
-    
+            
+            member this.getSolution =
+                createSolutionRec keys states.[nodeLength-1] []
+                
+                
+                
