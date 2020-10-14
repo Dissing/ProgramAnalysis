@@ -1,113 +1,149 @@
 ﻿namespace FrontEnd
 
 module Lexer =
-    
-    type LexingContext = string * int
-    let head (ctx: LexingContext) = (fst ctx).[snd ctx]
-    let tail (ctx: LexingContext) = (fst ctx, (snd ctx) + 1)
-    let currentPos (ctx: LexingContext) = snd ctx
-    
-    let isDone (ctx: LexingContext) = (fst ctx).Length = (snd ctx)
-    
-    let lexSingle (token: TokenKind) (tokens: Token List) (ctx: LexingContext) =
-        let pos = currentPos ctx
-        let span = { From = pos; To = pos; }
-        ((token, span)::tokens, tail ctx)
-        
-    let lexDouble (expected: char) (token: TokenKind) (tokens: Token List) (ctx: LexingContext) =
-        if head (tail ctx) = expected then
-            let pos = currentPos ctx
-            let span = { From = pos; To = pos+1; }
-            ((token, span)::tokens, tail (tail ctx))
-        else failwithf "'%c' followed by unexpected '%c'" (head ctx) (head (tail ctx))
-        
-    let lexInteger (tokens: Token List) (ctx: LexingContext) =
-        let from_pos = currentPos ctx
-        let rec extractLexeme (ctx: LexingContext) (lexeme: string) =
-                if not (isDone ctx) && System.Char.IsDigit (head ctx) then
-                    extractLexeme (tail ctx) (lexeme + string (head ctx))
-                else
-                    (ctx, lexeme)
-        let (ctx, lexeme) = extractLexeme ctx ""
-        let number = int lexeme
-        let to_pos = (currentPos ctx) - 1
-        let span = { From = from_pos; To = to_pos; }
-        ((INTEGER(number), span)::tokens, ctx)
-        
-    let lexIdentifier (tokens: Token List) (ctx: LexingContext) =
-        let from_pos = currentPos ctx
-        let rec extractLexeme (ctx: LexingContext) (lexeme: string) =
-            if not (isDone ctx) && System.Char.IsLetter (head ctx) then
-                extractLexeme (tail ctx) (lexeme + string (head ctx))
+
+    type LexingState =
+        { Content: string
+          CurrentPosition: int }
+
+    let head (s: LexingState) =
+        if s.CurrentPosition < s.Content.Length
+        then Ok(s.Content.[s.CurrentPosition])
+        else Error("ICE: Lexer out of bounds!", {From = s.CurrentPosition; To = s.CurrentPosition})
+
+    let consume (s: LexingState) =
+        Ok
+            ({ Content = s.Content
+               CurrentPosition = s.CurrentPosition + 1 })
+
+    let currentPos (s: LexingState) = s.CurrentPosition
+
+    let isDone (s: LexingState) = s.Content.Length = s.CurrentPosition
+
+    let lexSingle (token: TokenKind) (tokens: Token List) (s: LexingState) =
+        let pos = currentPos s
+        let span = { From = pos; To = pos }
+        context.map (consume s, (fun s' -> ((token, span) :: tokens, s')))
+
+    let lexDouble (expected: char) (token: TokenKind) (tokens: Token List) (s: LexingState) =
+        context {
+            let pos = currentPos s
+            let span = { From = pos; To = pos + 1 }
+            let! consumedFirst = consume s
+            let! nextChar = head consumedFirst
+
+            if nextChar = expected then
+                let! consumedSecond = consume consumedFirst
+                return ((token, span) :: tokens, consumedSecond)
             else
-                (ctx, lexeme)
-        let (ctx, lexeme) = extractLexeme ctx ""
-        let to_pos = (currentPos ctx) - 1
-        
-        let kind =
-            match lexeme with
-            | "true" -> TRUE
-            | "false" -> FALSE
-            | "if" -> IF
-            | "else" -> ELSE
-            | "while" -> WHILE
-            | "read" -> READ
-            | "write" -> WRITE
-            | "int" -> INT
-            | other -> IDENTIFIER(other)
-            
-        let span = { From = from_pos; To = to_pos; }
-        
-        ((kind, span)::tokens, ctx)
-        
-        
-    
-    let rec Scan ((tokens : Token List), (ctx : LexingContext)) = 
-        if isDone ctx then
-            let eof_span = { From = snd ctx; To = snd ctx; }
-            let eof_token = (EOF, eof_span)
-            (List.rev (eof_token::tokens), "")
+                let! firstChar = head s
+
+                let err_msg =
+                    sprintf "'%c' followed by unexpected '%c' instead of expected '%c'" firstChar nextChar expected
+
+                return! Error(err_msg, span)
+        }
+
+    let lexConditionalDouble (condition: char)
+                             (ifToken: TokenKind)
+                             (elseToken: TokenKind)
+                             (tokens: Token List)
+                             (s: LexingState)
+                             =
+        if consume s >>= head = Ok(condition) then
+            consume s >>= lexSingle ifToken tokens
         else
-            match head ctx with
-            | ' ' | '\t' | '\n' | '\r' -> Scan (tokens, tail ctx)
-            | '+' -> Scan (lexSingle PLUS tokens ctx)
-            | '-' -> Scan (lexSingle MINUS tokens ctx)
-            | '*' -> Scan (lexSingle MULTIPLICATION tokens ctx)
-            | '/' -> Scan (lexSingle DIVISION tokens ctx)
-            | '%' -> Scan (lexSingle MODULO tokens ctx)
-            | '{' -> Scan (lexSingle LEFT_CURLY tokens ctx)
-            | '[' -> Scan (lexSingle LEFT_SQUARE tokens ctx)
-            | '(' -> Scan (lexSingle LEFT_PAREN tokens ctx)
-            | '}' -> Scan (lexSingle RIGHT_CURLY tokens ctx)
-            | ']' -> Scan (lexSingle RIGHT_SQUARE tokens ctx)
-            | ')' -> Scan (lexSingle RIGHT_PAREN tokens ctx)
-            | ';' -> Scan (lexSingle SEMI_COLON tokens ctx)
-            | '.' -> Scan (lexSingle DOT tokens ctx)
-            | ',' -> Scan (lexSingle COMMA tokens ctx)
-            | '<' -> Scan (
-                            match head (tail ctx) with
-                            | '=' -> (lexSingle LESSER_EQUAL tokens (tail ctx))
-                            | _ -> (lexSingle LESSER tokens ctx)
-                            )
-            | '>' -> Scan (
-                            match head (tail ctx) with
-                            | '=' -> (lexSingle GREATER_EQUAL tokens (tail ctx))
-                            | _ -> (lexSingle GREATER tokens ctx)
-                            )
-            | '!' -> Scan (
-                            match head (tail ctx) with
-                            | '=' -> (lexSingle NOT_EQUAL tokens (tail ctx))
-                            | _ -> (lexSingle NOT tokens ctx)
-                            )
-            | ':' -> Scan (lexDouble '=' ASSIGN tokens ctx)
-            | '|' -> Scan (lexDouble '|' OR tokens ctx)
-            | '&' -> Scan (lexDouble '&' AND tokens ctx)
-            | '=' -> Scan (lexDouble '=' EQUAL tokens ctx)
-            | c -> if System.Char.IsLetter(c) then Scan (lexIdentifier tokens ctx)
-                   else if System.Char.IsDigit(c) then Scan (lexInteger tokens ctx)
-                   else failwithf "Unknown character '%c'" c
-        
-    let lex (source : string) =
-        let ctx = (source, 0)
-        let tokens, _ = Scan ([], ctx)
+            lexSingle elseToken tokens s
+            
+    let rec extractLexeme (lexeme: string) (requirement: (char -> bool)) (s: LexingState) =
+        match head s with
+        | Ok (c) when requirement(c) -> (consume s) >>= extractLexeme (lexeme + string c) requirement
+        | _ -> Ok((lexeme, s))
+
+
+    let lexInteger (tokens: Token List) (s: LexingState) =
+        context {
+            let fromPos = currentPos s
+            let! (lexeme, consumedLexeme) = extractLexeme "" System.Char.IsDigit s
+            let number = int lexeme
+            let toPos = (currentPos consumedLexeme) - 1
+            let span = { From = fromPos; To = toPos }
+            return ((INTEGER(number), span) :: tokens, consumedLexeme)
+        }
+
+    let lexIdentifier (tokens: Token List) (s: LexingState) =
+        context {
+            let fromPos = currentPos s
+            let! (lexeme, consumedLexeme) = extractLexeme "" System.Char.IsLetter s
+            let toPos = (currentPos consumedLexeme) - 1
+            let span = { From = fromPos; To = toPos }
+
+            let kind =
+                match lexeme with
+                | "true" -> TRUE
+                | "false" -> FALSE
+                | "if" -> IF
+                | "else" -> ELSE
+                | "while" -> WHILE
+                | "read" -> READ
+                | "write" -> WRITE
+                | "int" -> INT
+                | other -> IDENTIFIER(other)
+
+            return ((kind, span) :: tokens, consumedLexeme)
+        }
+
+    let rec Scan ((tokens: Token List), (s: LexingState)) =
+        if isDone s then
+            let eof_span =
+                { From = s.CurrentPosition
+                  To = s.CurrentPosition }
+
+            let eof_token = (EOF, eof_span)
+            Ok(List.rev (eof_token :: tokens))
+        else
+            context {
+                let! nextChar = head s
+
+                let! (updatedTokens, consumedState) =
+                    match nextChar with
+                    | ' '
+                    | '\t'
+                    | '\n'
+                    | '\r' -> context.map(consume s, fun s' -> (tokens, s'))
+                    | '+' -> lexSingle PLUS tokens s
+                    | '-' -> lexSingle MINUS tokens s
+                    | '*' -> lexSingle MULTIPLICATION tokens s
+                    | '/' -> lexSingle DIVISION tokens s
+                    | '%' -> lexSingle MODULO tokens s
+                    | '{' -> lexSingle LEFT_CURLY tokens s
+                    | '[' -> lexSingle LEFT_SQUARE tokens s
+                    | '(' -> lexSingle LEFT_PAREN tokens s
+                    | '}' -> lexSingle RIGHT_CURLY tokens s
+                    | ']' -> lexSingle RIGHT_SQUARE tokens s
+                    | ')' -> lexSingle RIGHT_PAREN tokens s
+                    | ';' -> lexSingle SEMI_COLON tokens s
+                    | '.' -> lexSingle DOT tokens s
+                    | ',' -> lexSingle COMMA tokens s
+                    | '<' -> lexConditionalDouble '=' LESSER_EQUAL LESSER tokens s
+                    | '>' -> lexConditionalDouble '=' GREATER_EQUAL GREATER tokens s
+                    | '!' -> lexConditionalDouble '=' NOT_EQUAL NOT tokens s
+                    | ':' -> lexDouble '=' ASSIGN tokens s
+                    | '|' -> lexDouble '|' OR tokens s
+                    | '&' -> lexDouble '&' AND tokens s
+                    | '=' -> lexDouble '=' EQUAL tokens s
+                    | c ->
+                        if System.Char.IsLetter(c) then lexIdentifier tokens s
+                        else if System.Char.IsDigit(c) then lexInteger tokens s
+                        else Error(sprintf "Unknown character '%c'" c, {From = s.CurrentPosition; To = s.CurrentPosition})
+
+                return! Scan(updatedTokens, consumedState)
+            }
+
+    let lex (source: string) =
+        let s =
+            { Content = source
+              CurrentPosition = 0 }
+
+        let tokens = Scan([], s)
         tokens

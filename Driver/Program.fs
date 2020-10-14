@@ -26,8 +26,10 @@ module Main =
         failwithf "Help not yet implemented"
         
     let frontendPipeline (config: Config) (source: SourceFile) =
-        let tokens = Lexer.lex source.Content
-        let ast = Parser.parse source tokens
+        let ast = context {
+            let! tokens = Lexer.lex source.Content
+            return Parser.parse tokens
+        }
         failwith "Rest of pipeline not yet implemented"
         
         
@@ -47,8 +49,8 @@ module Main =
                 
         let matches =
             match parse opts (Array.toList args) with
-            | Ok(m) -> m
-            | Error(s) -> failwithf "Error: %s" s
+            | Result.Ok(m) -> m
+            | Result.Error(s) -> failwithf "Error: %s" s
             
         let rec iterOpts (config: Config) (opts: OptMatch list) =
             match opts with

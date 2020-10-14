@@ -29,11 +29,10 @@ module EdgesFunction =
 
             | If(bExpr, block, None) :: tail ->
                 //Handle the branch
-                let (_, bStmts) = block
                 let nList = nodeIndex :: nList
                 let eList = (startNode, Condition bExpr, nodeIndex) :: eList
-                let (nodeIndex, nList, eList) = edges bStmts nodeIndex (nodeIndex+1) endNode nList eList
-
+                let (nodeIndex, nList, eList) = edges block nodeIndex (nodeIndex+1) endNode nList eList
+                
                 //Fix if last part of inner operation
                 if tail.IsEmpty && endNode <> -1 then
                     let leavingEdge = (startNode, Condition (BooleanUnary (Not, bExpr)), endNode)
@@ -48,39 +47,35 @@ module EdgesFunction =
                 //Fix if last part of inner operation
                 if tail.IsEmpty && endNode <> -1 then
                     //Handle the first branch
-                    let (_, bStmts) = block
                     let nList = nodeIndex :: nList
                     let eList = (startNode, Condition bExpr, nodeIndex) :: eList
-                    let (nodeIndex, nList, eList) = edges bStmts nodeIndex (nodeIndex+1) endNode nList eList
-
+                    let (nodeIndex, nList, eList) = edges block nodeIndex (nodeIndex+1) endNode nList eList
+                    
                     //Handle the second branch
-                    let (_, bStmts) = blockOp
                     let nList = nodeIndex :: nList
                     let eList = (startNode, Condition (BooleanUnary (Not, bExpr)), nodeIndex) :: eList
-                    let (NextNode, nList, eList) = edges bStmts nodeIndex (nodeIndex+1) endNode nList eList
-
+                    let (NextNode, nList, eList) = edges blockOp nodeIndex (nodeIndex+1) endNode nList eList
+                    
                     (NextNode, nList, eList)
                 else 
                     //Handle the first branch
-                    let (_, bStmts) = block
                     let nList = nodeIndex :: nList
                     let eList = (startNode, Condition bExpr, nodeIndex) :: eList
-                    let (nodeIndex, nList, eList) = edges bStmts nodeIndex (nodeIndex+1) -1 nList eList
-
+                    let (nodeIndex, nList, eList) = edges block nodeIndex (nodeIndex+1) -1 nList eList
+                    
                     //Handle the second branch
-                    let (_, bStmts) = blockOp
                     let nList = nodeIndex :: nList
                     let eList = (startNode, Condition (BooleanUnary (Not, bExpr)), nodeIndex) :: eList
-                    let (NextNode, nList, eList) = edges bStmts nodeIndex (nodeIndex+1) (nodeIndex-1) nList eList                  
+                    let (NextNode, nList, eList) = edges blockOp nodeIndex (nodeIndex+1) (nodeIndex-1) nList eList
+                    
                     edges tail (nodeIndex-1) NextNode endNode nList eList
                     
             | While(bExpr, block) :: tail ->
                 //Handle the loop
-                let (_, bStmts) = block
                 let nList = nodeIndex :: nList
                 let eList = (startNode, Condition bExpr, nodeIndex) :: eList
-                let (nodeIndex, nList, eList) = edges bStmts nodeIndex (nodeIndex+1) startNode nList eList
-                    
+                let (nodeIndex, nList, eList) = edges block nodeIndex (nodeIndex+1) startNode nList eList
+                
                 //Fix if last part of inner operation
                 if tail.IsEmpty && endNode <> -1 then
                     let leavingEdge = (startNode, Condition (BooleanUnary (Not, bExpr)), endNode)
