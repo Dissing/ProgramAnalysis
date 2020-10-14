@@ -8,6 +8,8 @@ module ProgramGraph =
     type AssignLiteralExpr = Ident * (Ident * ArithmeticExpr) List
     
     type Action =
+        | Allocate of Ident
+        | Free of Ident
         | Assign of AssignExpr
         | AssignLiteral of AssignLiteralExpr
         | Condition of BooleanExpr
@@ -18,3 +20,5 @@ module ProgramGraph =
     type Edge = Node * Action * Node
 
     type Graph = Node List * Edge List
+       
+    type AnnotatedGraph = Map<Ident, DeclarationInfo> * Graph

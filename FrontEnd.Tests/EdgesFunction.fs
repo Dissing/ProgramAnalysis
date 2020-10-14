@@ -207,6 +207,7 @@ let EdgesInnerWhile () =
     let (nodes, edges) = EdgesFunction.runEdges ast
     Assert.That(List.toArray nodes, Is.EqualTo(List.toArray expectedNodes))
     Assert.That(List.toArray edges, Is.EqualTo(List.toArray expectedEdges))
+    
     (*let ast = ([], [
         Statement.Assign(Location.Identifier "y", ArithmeticExpr.IntLiteral 1)
         Statement.While (

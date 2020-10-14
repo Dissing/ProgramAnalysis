@@ -49,6 +49,8 @@ module AST =
            | ArrayDecl of Ident * int
            | Struct of Ident * FieldDeclaraction List
     and Statement =
+        | Allocate of Ident
+        | Free of Ident
         | Assign of Location * ArithmeticExpr
         | StructAssign of Ident * (Ident * ArithmeticExpr) list
         | If of BooleanExpr * Block * Block option
@@ -57,7 +59,11 @@ module AST =
         | Write of ArithmeticExpr
     and Block = Declaration List * Statement list
     
+    
+    //Temp type, delete when correct one is created
+    type DeclarationInfo = int
+    
     //TODO Should probably rename to avoid name clash with module
     //TODO Note how Block and AST have essentially become the same
-    type AST = Declaration List * Statement List
+    type AST = Map<Ident, DeclarationInfo> * Block
  
