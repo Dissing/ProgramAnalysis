@@ -5,13 +5,13 @@ open FrontEnd.AST
 module ProgramGraph =
     
     type AssignExpr = Location * ArithmeticExpr
-    type AssignLiteralExpr = Ident * (Ident * ArithmeticExpr) List
+    type AssignStructExpr = Ident * (Ident * ArithmeticExpr) List
     
     type Action =
-        | Allocate of Ident
+        | Allocate of Declaration
         | Free of Ident
         | Assign of AssignExpr
-        | AssignLiteral of AssignLiteralExpr
+        | AssignLiteral of AssignStructExpr
         | Condition of BooleanExpr
         | Read of Location
         | Write of ArithmeticExpr

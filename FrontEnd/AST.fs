@@ -42,14 +42,12 @@ module AST =
         | Comparison of ArithmeticExpr * ComparisonOperator * ArithmeticExpr
         | BooleanBinary of BooleanExpr * BooleanBinaryOperator * BooleanExpr
          
-    type FieldDeclaraction = string * string
-         
     type Declaration =
            | Integer of Ident
            | ArrayDecl of Ident * int
-           | Struct of Ident * FieldDeclaraction List
+           | Struct of Ident * Ident List
     and Statement =
-        | Allocate of Ident
+        | Allocate of Declaration
         | Free of Ident
         | Assign of Location * ArithmeticExpr
         | StructAssign of Ident * (Ident * ArithmeticExpr) list
@@ -57,13 +55,8 @@ module AST =
         | While of BooleanExpr * Block
         | Read of Location
         | Write of ArithmeticExpr
-    and Block = Declaration List * Statement list
+    and Block = Statement list
     
-    
-    //Temp type, delete when correct one is created
-    type DeclarationInfo = int
-    
-    //TODO Should probably rename to avoid name clash with module
-    //TODO Note how Block and AST have essentially become the same
-    //type AST = Map<Ident, DeclarationInfo> * Block
-    type AST = Block
+
+    type DeclarationInfo = Map<Ident,Declaration>
+    type AST = DeclarationInfo * Statement List
