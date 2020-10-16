@@ -37,7 +37,7 @@ module Main =
     [<EntryPoint>]
     let main args =
         printfn "Hello World from F#!"
-        
+        (*
         let opts =
                 []
                 |> addFlag "h" "help" "print this help menu"
@@ -81,5 +81,24 @@ module Main =
             let (graph, isDone) = frontendPipeline config file
             if not isDone then
                 analysisPipeline config graph
+        *)
+        let ast = ([], [
+            AST.Statement.Assign(AST.Location.Identifier "a", AST.ArithmeticExpr.IntLiteral 10) ;
+            AST.Statement.If(
+                AST.Comparison ((AST.Loc (AST.Identifier "x")), AST.Greater, (AST.Loc (AST.Identifier "y"))),
+                ([],[
+                    AST.Statement.Assign(AST.Location.Identifier "x", AST.ArithmeticBinary ((AST.Loc (AST.Identifier "x")), AST.Subtract, (AST.IntLiteral 1)))
+                    AST.Statement.Assign(AST.Location.Identifier "x", AST.ArithmeticBinary ((AST.Loc (AST.Identifier "x")), AST.Subtract, (AST.IntLiteral 1)))
+                ]),
+                Some ([],[
+                    AST.Statement.Assign(AST.Location.Identifier "y", AST.ArithmeticBinary ((AST.Loc (AST.Identifier "y")), AST.Subtract, (AST.IntLiteral 1)))
+                    AST.Statement.Assign(AST.Location.Identifier "y", AST.ArithmeticBinary ((AST.Loc (AST.Identifier "y")), AST.Subtract, (AST.IntLiteral 1)))
+                ])
+            ) ;
+        ])
+        let (nodes, edges) = EdgesFunction.runEdges ast
+        printfn "%A" nodes
+        printfn "%A" edges
+        
                     
         0 // return an integer exit code
