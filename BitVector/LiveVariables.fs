@@ -53,6 +53,9 @@ module LiveVariables =
             | _ -> []
         
         let mutable states: (Set<LVVariable>)[] = [||]
+        
+        let mutable nodeLength = 0
+        
         let performGen (state: Set<LVVariable>) (genLoc: List<Location>) (nodeIn: Node) = 
             let updatedSet = genAction genLoc state
                
@@ -63,7 +66,22 @@ module LiveVariables =
                [nodeIn]
             else
                 []                    
-         
+        
+        let createLVString var =
+            match var with
+            | LiveAssign ident -> sprintf "%s" ident
+            | LiveArray ident -> sprintf "%s" ident
+            | LiveField (strct, ident) -> sprintf "%s.%s" strct ident
+        
+        let createSolutionForNode (var: Set<LVVariable>) =
+            Set.fold (fun acc ele -> (createLVString ele)::acc) [] var
+        
+        let rec createSolutionRec (states: (Set<LVVariable>[])) (index: int) (result: List<List<string>>) =
+            match index with
+            | 0 -> ((createSolutionForNode states.[0])::result)
+            | i -> createSolutionRec states (index-1) ((createSolutionForNode states.[i])::result)
+        
+        member this.getSolution() = (this :> IAlgorithm).getSolution
         
         interface IAlgorithm with
         
@@ -73,7 +91,7 @@ module LiveVariables =
                 let nodes = fst graph
                 
                 states <- Array.create (nodes.Length) (Set.empty)
-                
+                nodeLength <- nodes.Length
                 [nodes.Length-1]
             
             
@@ -122,7 +140,7 @@ module LiveVariables =
                 "Not implemented"
                 
             member this.getSolution =
-                []
+                createSolutionRec states (nodeLength-1) []
     
                 
 

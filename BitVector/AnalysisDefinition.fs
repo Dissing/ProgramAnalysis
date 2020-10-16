@@ -82,11 +82,14 @@ module AnalysisDefinition =
             run (nodes, edges) newFrontier algorithm
         
     let rec runReverse ((nodes, edges) : Graph) (frontier : Set<Node>) (algorithm : IAlgorithm) =
-        let node = Set.minElement frontier
-        let outEdges = getInEdges node edges
-        let frontierRemoved = frontier.Remove node
-        let newFrontier = Set.union frontierRemoved (Set.ofList(runEdges outEdges [] algorithm))
-        run (nodes, edges) newFrontier algorithm
+        if frontier.IsEmpty then
+            algorithm
+        else 
+            let node = Set.minElement frontier
+            let outEdges = getInEdges node edges
+            let frontierRemoved = frontier.Remove node
+            let newFrontier = Set.union frontierRemoved (Set.ofList(runEdges outEdges [] algorithm))
+            runReverse (nodes, edges) newFrontier algorithm
     
     let Analyse (graph : Graph) (declarations : List<Declaration>) (algorithm : IAlgorithm) =
       

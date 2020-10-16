@@ -129,6 +129,7 @@ let write() =
     Assert.True(List.contains "(S.foo, ?, q0)" sol.[3])
     Assert.True(List.contains "(S.bar, ?, q0)" sol.[3])
 
+[<Test>]
 let conditionIf() =
     let source = SourceFile("parseAssign.c", "int x; if(x > 0) {x:=5;}")
     let (declarations, statements) = Parser.parse source (Lexer.lex source.Content)
@@ -142,6 +143,8 @@ let conditionIf() =
     Assert.True(List.contains "(x, ?, q0)" sol.[1])
     Assert.True(List.contains "(x, ?, q0)" sol.[2])
     Assert.True(List.contains "(x, q1, q2)" sol.[2])
+
+[<Test>]
 let conditionIfElse() =
     let source = SourceFile("parseAssign.c", "int x; int; y; if(x > 0) {x:=5;} else{y:=2;}")
     let (declarations, statements) = Parser.parse source (Lexer.lex source.Content)
@@ -157,6 +160,8 @@ let conditionIfElse() =
     Assert.True(List.contains "(x, q1, q3)" sol.[3])
     Assert.True(List.contains "(y, ?, q0)" sol.[3])
     Assert.True(List.contains "(y, q2, q3)" sol.[3])
+
+[<Test>]
 let conditionWhile() =
     let source = SourceFile("parseAssign.c", "int x; while(x > 0) {x:=x-1;}")
     let (declarations, statements) = Parser.parse source (Lexer.lex source.Content)
