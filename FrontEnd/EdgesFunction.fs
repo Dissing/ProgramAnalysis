@@ -6,6 +6,18 @@ open FrontEnd.ProgramGraph;
 
 module EdgesFunction = 
 
+    let rec fixEdges (nodeNumber : int) (highestNumber: int) (eList : Edge List) (newList : Edge List) =
+        match eList with
+        | [] -> List.rev newList
+        | (n1, expr, n2) :: tail -> if n1 > nodeNumber then
+                                        if n2 = nodeNumber then fixEdges nodeNumber highestNumber tail (((n1-1), expr, highestNumber) :: newList)
+                                        else if n2 > nodeNumber then fixEdges nodeNumber highestNumber tail (((n1-1), expr, (n2-1)) :: newList)
+                                        else fixEdges nodeNumber highestNumber tail (((n1-1), expr, n2) :: newList)
+                                    else
+                                        if n2 = nodeNumber then fixEdges nodeNumber highestNumber tail ((n1, expr, highestNumber) :: newList)
+                                        else if n2 > nodeNumber then fixEdges nodeNumber highestNumber tail ((n1, expr, (n2-1)) :: newList)
+                                        else fixEdges nodeNumber highestNumber tail ((n1, expr, n2) :: newList)
+                                              
     let rec edges (stmts : Statement List) (startNode : int) (nodeIndex : int) (endNode : int) (nList : Node List) (eList : Edge List) =
         match stmts with
             | [] -> (nodeIndex, nList, eList)
@@ -76,7 +88,7 @@ module EdgesFunction =
                     let nList = nodeIndex :: nList
                     let eList = (startNode, Condition (BooleanUnary (Not, bExpr)), nodeIndex) :: eList
                     let (NextNode, nList, eList) = edges bStmts nodeIndex (nodeIndex+1) endNode nList eList
-
+                                        
                     (NextNode, nList, eList)
                 else 
                     //Handle the first branch
@@ -90,7 +102,13 @@ module EdgesFunction =
                     let nList = nodeIndex :: nList
                     let eList = (startNode, Condition (BooleanUnary (Not, bExpr)), nodeIndex) :: eList
                     let (NextNode, nList, eList) = edges bStmts nodeIndex (nodeIndex+1) (nodeIndex-1) nList eList                  
-                    edges tail (nodeIndex-1) NextNode endNode nList eList
+                    
+                    if tail.IsEmpty then
+                        let eList = fixEdges (nodeIndex-1) (NextNode-1) eList []
+                        edges tail (nodeIndex-1) NextNode endNode nList eList
+                    else
+                        edges tail (nodeIndex-1) NextNode endNode nList eList
+                    
                     
             | While(bExpr, block) :: tail ->
                 //Handle the loop
@@ -131,8 +149,9 @@ module EdgesFunction =
                     edges tail nodeIndex (nodeIndex+1) endNode nList eList                    
                     
     let runEdges (ast : AST) =
-        let (declMap, (_, stmts)) = ast
+        //let (declMap, (_, stmts)) = ast
+        let (_, stmts) = ast
         let (_, nList, eList) = edges stmts 0 1 -1 [0] []
              
-        (declMap, (List.rev nList, List.rev eList))
-     
+        //(declMap, (List.rev nList, List.rev eList))
+        (List.rev nList, List.rev eList)

@@ -65,5 +65,5 @@ module AST =
     
     //TODO Should probably rename to avoid name clash with module
     //TODO Note how Block and AST have essentially become the same
-    type AST = Map<Ident, DeclarationInfo> * Block
- 
+    //type AST = Map<Ident, DeclarationInfo> * Block
+    type AST = Block

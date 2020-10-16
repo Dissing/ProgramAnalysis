@@ -21,7 +21,7 @@ let EdgesIfThen () =
         ) ;
         Statement.Assign(Location.Identifier "b", ArithmeticExpr.IntLiteral 10)
     ])
-    
+        
     let expectedNodes = [0;1;2;3;4]
     let expectedEdges = [
         (0, Action.Assign (Identifier "a", IntLiteral 10), 1);
@@ -32,6 +32,9 @@ let EdgesIfThen () =
     ]  
 
     let (nodes, edges) = EdgesFunction.runEdges ast
+    
+    printfn "%A" edges
+    
     Assert.That(List.toArray nodes, Is.EqualTo(List.toArray expectedNodes))
     Assert.That(List.toArray edges, Is.EqualTo(List.toArray expectedEdges))
 
@@ -248,16 +251,8 @@ let EdgesInnerWhile () =
     Assert.That(List.toArray edges, Is.EqualTo(List.toArray expectedEdges))
     *)
 
-
-//let main =  
-    //let (nodes, edges) = EdgesFunction.runEdges ast
-    //printfn "%A" nodes
-    //printfn "%A" edges
     
-    //Printer Test
-    //let (res, _) = FrontEnd.Printer.BooleanPrinter "" (BooleanBinary ((BooleanBinary (BooleanUnary (Not, BooleanLiteral true), Or, BooleanLiteral true)), And, (BooleanBinary (BooleanLiteral true, Or, BooleanUnary (Not, BooleanLiteral false)))))
-    //printfn "%s" res
-    
+//let main =
     //If-Then Test
     //let ast = ([], [
     //    Statement.Assign(Location.Identifier "a", ArithmeticExpr.IntLiteral 10) ;
@@ -268,9 +263,11 @@ let EdgesInnerWhile () =
     //        ]),
     //        None
     //    ) ;
-    //    Statement.Assign(Location.Identifier "b", ArithmeticExpr.IntLiteral 10)
-    //])
-    
+    //]) 
+    //let (nodes, edges) = EdgesFunction.runEdges ast
+    //printfn "%A" nodes
+    //printfn "%A" edges
+        
   
     //Inner If-Then Test
     //let ast = ([], [
