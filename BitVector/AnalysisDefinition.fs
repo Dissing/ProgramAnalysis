@@ -37,7 +37,7 @@ module AnalysisDefinition =
         //default this.printSolution =
         //    failwith "Not implemented"
         
-        abstract member getSolution: List<string>
+        abstract member getSolution: List<List<string>>
     
     
     let getOutEdges (node : Node) (edges : List<Edge>) =

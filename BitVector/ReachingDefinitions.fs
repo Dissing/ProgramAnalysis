@@ -81,20 +81,26 @@ module ReachingDefinitions =
             | UnmodifiedStandard ident -> sprintf "(%s, ?, q0)" ident
             | UnmodifiedArray ident -> sprintf "(%s, ?, q0)" ident
             | UnmodifiedField (strct, ident) -> sprintf "(%s.%s, ?, q0)" strct ident
-            | ModifiedStandard (ident, nin, nout) -> sprintf "(q%d, %s, q%d)" nin ident nout
-            | ModifiedArray (ident, nin, nout) -> sprintf "(q%d, %s, q%d)" nin ident nout
-            | ModifiedField ((strct, ident), nin, nout) -> sprintf "(q%d, %s.%s, q%d)" nin strct ident nout
+            | ModifiedStandard (ident, nin, nout) -> sprintf "(%s, q%d, q%d)" ident nin nout
+            | ModifiedArray (ident, nin, nout) -> sprintf "(%s, q%d, q%d)" ident nin nout
+            | ModifiedField ((strct, ident), nin, nout) -> sprintf "(%s.%s, q%d, q%d)" strct ident nin nout
             
         let rec createRDStrings (rdStrings: List<RDVarState>) (results: List<string>) =
             match rdStrings with
             | [] -> results
             | head::tail -> createRDStrings tail ((createRDString head)::results)
         
-        let rec createSolutionRec (keys: List<string>) (states: Map<string, Set<RDVarState>>) (results: List<string>) =
+        let rec createNodeSolutionRec (keys: List<string>) (states: Map<string, Set<RDVarState>>) (results: List<string>) =
             match keys with
             | [] -> results
-            | head :: tail -> createSolutionRec tail states (results@( createRDStrings (Set.toList (states.[head])) []))
+            | head :: tail -> createNodeSolutionRec tail states (results@( createRDStrings (Set.toList (states.[head])) []))
+       
+        let rec createSolutionRec (st: (Map<string, Set<RDVarState>>)[]) (index: int) (keys: List<string>) (result: List<List<string>>) =
+            match index with
+            | 0 -> (createNodeSolutionRec keys st.[0] [])::result
+            | i -> createSolutionRec st (index-1) keys ((createNodeSolutionRec keys st.[i] [])::result)
         
+         
         let mutable states: (Map<string, Set<RDVarState>>)[] = [||]
         let mutable keys: List<string> = []
         
@@ -127,10 +133,14 @@ module ReachingDefinitions =
                                        | Struct (id, fields) -> let (newMap, newKeys) = parseFields id fields map keys
                                                                 parseDeclaration tail newMap newKeys
                     | [] -> (map, keys)
-                
+                                
                 let (startMap, newKeys) = parseDeclaration declaration Map.empty []
-                states.[0] <- startMap
                 keys <- newKeys
+                
+                for i in 1 .. nodeLength - 1 do
+                    states.[i] <- Map.ofList([for k in keys do yield (k, Set.empty)])
+                
+                states.[0] <- startMap
                 [nodes.[0]]
             
             
@@ -200,7 +210,7 @@ module ReachingDefinitions =
                 "Not implemented"
             
             member this.getSolution =
-                createSolutionRec keys states.[nodeLength-1] []
+                createSolutionRec states (nodeLength-1) keys []
                 
                 
                 
