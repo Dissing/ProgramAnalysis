@@ -57,6 +57,6 @@ module AST =
         | Write of ArithmeticExpr
     and Block = Statement list
     
+
     type DeclarationInfo = Map<Ident,Declaration>
     type AST = DeclarationInfo * Statement List
- 
