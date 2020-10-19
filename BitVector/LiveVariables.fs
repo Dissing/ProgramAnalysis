@@ -135,6 +135,26 @@ module LiveVariables =
                 let genLoc = extractLocationsArithmeticExpr aExpr []
                 
                 performGen states.[nodeOut] genLoc nodeIn                
+            
+            member this.updateFree (nodeIn, _, nodeOut) =
+                performGen states.[nodeOut] [] nodeIn                
+
+            member this.updateAllocate (nodeIn, allocate, nodeOut) =
+                
+                let rec allocateStruct (strct: Ident) (literals: List<Ident>) (set: Set<LVVariable>) =
+                    match literals with
+                    | [] -> set
+                    | head::tail -> allocateStruct strct tail (set.Remove (LiveField(strct, head)))
+
+                let allocateVariable (allocate: Declaration) (set: Set<LVVariable>) =
+                    match allocate with
+                    | Integer ident -> set.Remove (LiveAssign(ident))
+                    | ArrayDecl (ident, _) -> set.Remove (LiveArray(ident))
+                    | Struct (strct, idents) -> allocateStruct strct idents set
+
+                let newSet = allocateVariable allocate states.[nodeOut]
+
+                performGen newSet [] nodeIn 
 
             member this.printSolution =
                 "Not implemented"

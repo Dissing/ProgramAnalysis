@@ -9,7 +9,7 @@ module AnalysisDefinition =
         
         abstract member isReverse: bool
         
-        abstract member initialise: graph: Graph -> declaration: List<Declaration> -> List<Node>
+        abstract member initialise: graph: Graph -> declaration: DeclarationInfo -> List<Node>
         //default this.initialise graph declaration =
         //    failwith "Not implemented"
         
@@ -17,7 +17,7 @@ module AnalysisDefinition =
         //default this.updateAssign (nodeIn, assign, nodeOut) =
         //    failwith "Not implemented"
         
-        abstract member updateAssignLiteral: nodeIn: Node * assign: AssignLiteralExpr * nodeOut: Node -> List<Node>
+        abstract member updateAssignLiteral: nodeIn: Node * assign: AssignStructExpr * nodeOut: Node -> List<Node>
         //default this.updateAssignLiteral (nodeIn, assignLiteral, nodeOut) =
         //    failwith "Not implemented"
         
@@ -33,6 +33,10 @@ module AnalysisDefinition =
         //default this.updateWrite (nodeIn, write, nodeOut) =
         //    failwith "Not implemented"
         
+        abstract member updateFree: nodeIn: Node * free: Ident * nodeOut: Node -> List<Node>
+        
+        abstract member updateAllocate: nodeIn: Node * allocate: Declaration * nodeOut: Node -> List<Node>
+
         abstract member printSolution: string        
         //default this.printSolution =
         //    failwith "Not implemented"
@@ -69,6 +73,8 @@ module AnalysisDefinition =
              | Condition c -> runEdges tail (outNodes@(algorithm.updateCondition (nodeIn, c, nodeOut))) algorithm
              | Read r -> runEdges tail (outNodes@(algorithm.updateRead (nodeIn, r, nodeOut))) algorithm
              | Write w -> runEdges tail (outNodes@(algorithm.updateWrite (nodeIn, w, nodeOut))) algorithm
+             | Allocate a -> runEdges tail (outNodes@(algorithm.updateAllocate (nodeIn, a, nodeOut))) algorithm
+             | Free f -> runEdges tail (outNodes@(algorithm.updateFree (nodeIn, f, nodeOut))) algorithm
         | [] -> outNodes
         
     let rec run ((nodes, edges) : Graph) (frontier : Set<Node>) (algorithm : IAlgorithm) =
@@ -91,7 +97,7 @@ module AnalysisDefinition =
             let newFrontier = Set.union frontierRemoved (Set.ofList(runEdges outEdges [] algorithm))
             runReverse (nodes, edges) newFrontier algorithm
     
-    let Analyse (graph : Graph) (declarations : List<Declaration>) (algorithm : IAlgorithm) =
+    let Analyse (graph : Graph) (declarations : DeclarationInfo) (algorithm : IAlgorithm) =
       
       let frontier = Set.ofList (algorithm.initialise graph declarations)
     

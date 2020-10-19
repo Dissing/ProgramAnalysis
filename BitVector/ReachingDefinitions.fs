@@ -103,7 +103,7 @@ module ReachingDefinitions =
          
         let mutable states: (Map<string, Set<RDVarState>>)[] = [||]
         let mutable keys: List<string> = []
-        
+        let mutable declarations: DeclarationInfo = Map.empty 
         let mutable nodeLength: int = 0
         
         
@@ -117,13 +117,15 @@ module ReachingDefinitions =
                 let nodes = fst graph
                 
                 nodeLength <- nodes.Length
-                
+
+                declarations <- declaration 
+
                 states <- Array.create (nodeLength) (Map.empty)
                 
-                let rec parseFields (id: Ident) (fields: List<FieldDeclaraction>) (map: Map<string, Set<RDVarState>>) (keys: List<string>) =
+                let rec parseFields (id: Ident) (fields: List<Ident>) (map: Map<string, Set<RDVarState>>) (keys: List<string>) =
                     match fields with
-                    | head :: tail -> let key = createFieldString id (snd head)
-                                      parseFields id tail (map.Add (key, Set([UnmodifiedField((id, (snd head)))]))) (key::keys)
+                    | head :: tail -> let key = createFieldString id head
+                                      parseFields id tail (map.Add (key, Set([UnmodifiedField((id,  head))]))) (key::keys)
                     | [] -> (map, keys)
                 let rec parseDeclaration (dList: List<Declaration>) (map: Map<string, Set<RDVarState>>) (keys: List<string>) =
                     match dList with
@@ -133,8 +135,10 @@ module ReachingDefinitions =
                                        | Struct (id, fields) -> let (newMap, newKeys) = parseFields id fields map keys
                                                                 parseDeclaration tail newMap newKeys
                     | [] -> (map, keys)
-                                
-                let (startMap, newKeys) = parseDeclaration declaration Map.empty []
+
+                let declarationList = Map.fold (fun acc _ ident -> ident::acc) [] declaration
+
+                let (startMap, newKeys) = parseDeclaration declarationList Map.empty []
                 keys <- newKeys
                 
                 for i in 1 .. nodeLength - 1 do
@@ -206,6 +210,37 @@ module ReachingDefinitions =
                     [nodeOut]
                 else
                     []
+        
+            member this.updateFree (nodeIn, free, nodeOut) =
+                let rec freeStructLiterals (strct: Ident) (literals: List<Ident>) (map: Map<string, Set<RDVarState>>) =
+                    match literals with
+                    | [] -> map
+                    | head::tail -> freeStructLiterals strct tail (map.Add ((locationToString (Field(strct, head))), Set.empty))
+                let freeVariables (declaration: Declaration) (state:Map<string, Set<RDVarState>> ) =
+                    match declaration with
+                    | Integer ident -> state.Add (ident, Set.empty)
+                    | ArrayDecl (ident, _) -> state.Add (ident, Set.empty)
+                    | Struct (strct, idents) -> freeStructLiterals strct idents state
+                let newMap = freeVariables declarations.[free] states.[nodeIn]
+                
+                let (mapUpdated, modified) = updateMapWithDifferences newMap states.[nodeOut] keys false
+                                
+                if modified = true then
+                    states.[nodeOut] <- mapUpdated
+                    [nodeOut]
+                else
+                    []
+
+
+            member this.updateAllocate (nodeIn, _, nodeOut) =
+                let (mapUpdated, modified) = updateMapWithDifferences states.[nodeIn] states.[nodeOut] keys false
+                                
+                if modified = true then
+                    states.[nodeOut] <- mapUpdated
+                    [nodeOut]
+                else
+                    []
+
             member this.printSolution =
                 "Not implemented"
             
