@@ -145,7 +145,7 @@ module ReachingDefinitions =
                     states.[i] <- Map.ofList([for k in keys do yield (k, Set.empty)])
                 
                 states.[0] <- startMap
-                [nodes.[0]]
+                nodes
             
             
             member this.updateAssign (nodeIn, assign, nodeOut) =

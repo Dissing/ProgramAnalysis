@@ -92,7 +92,7 @@ module LiveVariables =
                 
                 states <- Array.create (nodes.Length) (Set.empty)
                 nodeLength <- nodes.Length
-                [nodes.Length-1]
+                nodes
             
             
             member this.updateAssign (nodeIn, assign, nodeOut) =
