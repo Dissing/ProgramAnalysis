@@ -167,7 +167,7 @@ module ReachingDefinitions =
                     match assigns with
                     | (id,_)::tail -> let location = Field(strct, id)
                                       let newMap = performKillGenAction mapIn location nodeIn nodeOut
-                                      recursiveKillGen mapIn strct tail nodeIn nodeOut
+                                      recursiveKillGen newMap strct tail nodeIn nodeOut
                                                       
                     | [] -> mapIn
                 
