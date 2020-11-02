@@ -2,6 +2,19 @@
 
 ## Open Individual Tasks:
 
+
+### Generalize Analysis Definition & Worklist
+Assignee: Lasse
+
+### Depth First Spanning Tree & Reverse Post-order
+Assignee: Thomas
+
+### Strongly Connected Components & Natural Loops
+Assignee: Thomas
+
+
+## Not that important tasks:
+
 ### Program Graph Visualization
 Assignee: Lasse
 - A module which translates the program graph into Tikz
