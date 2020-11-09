@@ -47,3 +47,19 @@ type Analysis<'L when 'L : comparison> =
                 
         work initial_labelling worklist
 
+[<AbstractClass>]
+type BitVector<'D when 'D : comparison> =
+    inherit Analysis<Set<'D>>
+    
+    abstract member gen: Edge -> Set<'D>
+    
+    abstract member kill: Edge -> Set<'D>
+    
+    override this.analyseEdge (edge: Edge) (x: Set<'D>) =
+        let killSet = this.kill edge
+        let genSet = this.gen edge
+        Set.union (Set.difference x killSet) genSet
+        
+    
+    
+    
