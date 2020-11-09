@@ -17,6 +17,9 @@
         <Compile Include="EdgesFunction.fs" />
         <Compile Include="Printer.fs" />
         <Compile Include="Resolution.fs" />
+        <Compile Include="ReversePostorder.fs" />
+        <Compile Include="StrongComponents.fs" />
+        <Compile Include="NaturalLoops.fs" />
     </ItemGroup>
 
 </Project>
