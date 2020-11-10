@@ -1,7 +1,8 @@
 module Analysis.Tests.DangerousVariables
 
 open Analysis
-open Analysis.worklists
+open Analysis.Analyses
+open Analysis.Worklists
 open FrontEnd
 open FrontEnd.AST
 open NUnit.Framework
@@ -47,7 +48,7 @@ let dangerousVariables1 () =
         [A]; //free x
     ]
     
-    let solution = solution |> Map.toList |> List.map (fun (k,v) -> v)
+    let solution = solution |> Map.toList |> List.map (fun (k,v) -> Set.toList v)
     Assert.That(solution, Is.EqualTo(expected))
     
     

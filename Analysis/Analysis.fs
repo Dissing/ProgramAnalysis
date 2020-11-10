@@ -1,4 +1,5 @@
 ﻿namespace Analysis
+open System
 open FrontEnd
 open FrontEnd.ProgramGraph
 
@@ -12,6 +13,8 @@ type IWorklist =
 [<AbstractClass>]
 type Analysis<'L when 'L : comparison>() =
     
+    abstract member isReverseAnalysis: unit -> bool
+    
     abstract member lessThanOrEqual: 'L -> 'L -> bool
     
     abstract member leastUpperBound: 'L -> 'L -> 'L
@@ -20,7 +23,13 @@ type Analysis<'L when 'L : comparison>() =
     
     abstract member analyseEdge: Edge -> 'L -> 'L
     
-    member this.analyse ((annotation, (nodes, edges)): AnnotatedGraph) (worklist: IWorklist) (initial: 'L) =
+    member this.analyse ((annotation, pg): AnnotatedGraph) (worklist: IWorklist) (initial: 'L) =
+        
+        let (nodes, edges) =
+            if this.isReverseAnalysis() then
+                ProgramGraph.reverse pg
+            else
+                pg
  
         let initial_labelling = Map.ofList (List.map (fun (q: Node) -> (q, this.leastElement())) nodes)
         
@@ -58,14 +67,21 @@ type BitVector<'D when 'D : comparison> =
         let killSet = this.kill edge
         let genSet = this.gen edge
         Set.union (Set.difference x killSet) genSet
+       
+
+type AmalgamatedLocation =
+    | Variable of AST.Ident
+    | Array of AST.Ident
+    | Field of AST.Ident * AST.Ident
+    static member fromLocation (loc: AST.Location) =
+        match loc with
+        | AST.Identifier(i) -> Variable(i)
+        | AST.Array(i, _) -> Array(i)
+        | AST.Field(s,f) -> Field(s,f)
         
+module FreeVariables =
+    let arithmeticFreeVariables (expr: AST.ArithmeticExpr) = 
+        Set.map AmalgamatedLocation.fromLocation (AST.arithmeticFreeVariables expr)
     
-    type AmalgamatedLocation =
-        | Variable of AST.Ident
-        | Array of AST.Ident
-        | Field of AST.Ident * AST.Ident
-        static member fromLocation (loc: AST.Location) =
-            match loc with
-            | AST.Identifier(i) -> Variable(i)
-            | AST.Array(i, _) -> Array(i)
-            | AST.Field(s,f) -> Field(s,f)
+    let booleanFreeVariables (expr: AST.BooleanExpr) = 
+        Set.map AmalgamatedLocation.fromLocation (AST.booleanFreeVariables expr)

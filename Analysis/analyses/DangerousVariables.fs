@@ -1,5 +1,7 @@
-﻿namespace Analysis
+﻿namespace Analysis.Analyses
 
+open Analysis
+open Analysis.FreeVariables
 open FrontEnd
 open FrontEnd.ProgramGraph
     
@@ -7,6 +9,8 @@ type DV = Set<AmalgamatedLocation>
 
 type DangerousVariableAnalysis() =
     inherit Analysis<DV>()
+    
+    override this.isReverseAnalysis () = false
     
     override this.lessThanOrEqual (x: DV) (y: DV) = Set.isSubset x y
     
@@ -18,15 +22,13 @@ type DangerousVariableAnalysis() =
         match action with
         | Allocate(_) | Free(_) -> labeling
         | Assign((AST.Array(x,index), expr)) ->
-            let fv1 =  AST.freeVariables index
-            let fv2 = AST.freeVariables expr
-            let fv = Set.map AmalgamatedLocation.fromLocation (Set.union fv1 fv2)
+            let fv = Set.union (arithmeticFreeVariables index) (arithmeticFreeVariables expr)
             if (Set.intersect fv labeling).IsEmpty then
                 labeling
             else
                 labeling.Add(Array(x))
         | Assign((x, expr)) ->
-            let fv = Set.map AmalgamatedLocation.fromLocation (AST.freeVariables expr)
+            let fv = arithmeticFreeVariables expr
             if (Set.intersect fv labeling).IsEmpty then
                 labeling.Remove(AmalgamatedLocation.fromLocation x)
             else
@@ -35,7 +37,7 @@ type DangerousVariableAnalysis() =
             let (gen, kill) =
                  List.fold
                      (fun ((gen, kill): DV * DV) (field, expr) ->
-                        let fv = Set.map AmalgamatedLocation.fromLocation (AST.freeVariables expr)
+                        let fv = arithmeticFreeVariables expr
                         if (Set.intersect fv labeling).IsEmpty then
                             (gen, kill.Add(Field(s,field)))
                         else

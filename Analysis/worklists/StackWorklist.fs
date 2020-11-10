@@ -1,4 +1,4 @@
-﻿module Analysis.worklists
+﻿namespace Analysis.Worklists
 
 open FrontEnd
 
