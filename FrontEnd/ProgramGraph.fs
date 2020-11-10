@@ -21,4 +21,9 @@ module ProgramGraph =
 
     type Graph = Node List * Edge List
        
-    type AnnotatedGraph = Map<Ident, DeclarationInfo> * Graph
+    type AnnotatedGraph = DeclarationInfo * Graph
+    
+    let reverse ((nodes, edges): Graph) =
+        let revNodes = List.rev nodes
+        let revEdges = List.map (fun (src,action,dst) -> (dst,action,src)) edges
+        (revNodes, revEdges)
