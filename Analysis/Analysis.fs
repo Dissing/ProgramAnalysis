@@ -1,4 +1,5 @@
-﻿module Analysis.Analysis
+﻿namespace Analysis
+open FrontEnd
 open FrontEnd.ProgramGraph
 
 type IWorklist =
@@ -9,7 +10,7 @@ type IWorklist =
     
     
 [<AbstractClass>]
-type Analysis<'L when 'L : comparison> =
+type Analysis<'L when 'L : comparison>() =
     
     abstract member lessThanOrEqual: 'L -> 'L -> bool
     
@@ -17,8 +18,6 @@ type Analysis<'L when 'L : comparison> =
     
     abstract member leastElement: unit -> 'L
     
-    abstract member greatestElement: unit -> 'L
-
     abstract member analyseEdge: Edge -> 'L -> 'L
     
     member this.analyse ((annotation, (nodes, edges)): AnnotatedGraph) (worklist: IWorklist) (initial: 'L) =
@@ -61,5 +60,12 @@ type BitVector<'D when 'D : comparison> =
         Set.union (Set.difference x killSet) genSet
         
     
-    
-    
+    type AmalgamatedLocation =
+        | Variable of AST.Ident
+        | Array of AST.Ident
+        | Field of AST.Ident * AST.Ident
+        static member fromLocation (loc: AST.Location) =
+            match loc with
+            | AST.Identifier(i) -> Variable(i)
+            | AST.Array(i, _) -> Array(i)
+            | AST.Field(s,f) -> Field(s,f)

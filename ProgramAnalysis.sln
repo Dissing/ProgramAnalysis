@@ -13,6 +13,8 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "BitVector", "BitVector\BitV
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Analysis", "Analysis\Analysis.fsproj", "{C1506DA1-A6F6-4173-9FF5-36984724C241}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Analysis.Tests", "Analysis.Tests\Analysis.Tests.fsproj", "{AC16D78E-8056-4DF6-9888-DDD47265DCC4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -47,5 +49,9 @@ Global
 		{C1506DA1-A6F6-4173-9FF5-36984724C241}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C1506DA1-A6F6-4173-9FF5-36984724C241}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C1506DA1-A6F6-4173-9FF5-36984724C241}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AC16D78E-8056-4DF6-9888-DDD47265DCC4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AC16D78E-8056-4DF6-9888-DDD47265DCC4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AC16D78E-8056-4DF6-9888-DDD47265DCC4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AC16D78E-8056-4DF6-9888-DDD47265DCC4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

@@ -7,6 +7,7 @@
     <ItemGroup>
         <Compile Include="Analysis.fs" />
         <Compile Include="worklists\StackWorklist.fs" />
+        <Compile Include="analyses\DangerousVariables.fs" />
     </ItemGroup>
 
     <ItemGroup>

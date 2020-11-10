@@ -60,3 +60,12 @@ module AST =
 
     type DeclarationInfo = Map<Ident,Declaration>
     type AST = DeclarationInfo * Statement List
+    
+    
+    let rec freeVariables (a: ArithmeticExpr) =
+        match a with
+        | Loc(Array(name, index)) -> Set.union (Set.singleton (Array(name, index))) (freeVariables index)
+        | Loc(other) -> Set.singleton other
+        | IntLiteral(_) -> Set.empty
+        | ArithmeticUnary(_, inner) -> freeVariables inner
+        | ArithmeticBinary(left, _, right) -> Set.union (freeVariables left) (freeVariables right)

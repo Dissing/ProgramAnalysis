@@ -4,7 +4,7 @@ open FrontEnd
 
 type StackWorklist(nodes: List<ProgramGraph.Node>) =
     
-    new() = StackWorklist([])
+    static member empty() = StackWorklist([])
     
     interface Analysis.IWorklist with
         //NOTE: Upcast is for some strange reason not implicit in F#, so we need to explicitly add the

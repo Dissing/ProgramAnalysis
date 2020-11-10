@@ -21,4 +21,4 @@ module ProgramGraph =
 
     type Graph = Node List * Edge List
        
-    type AnnotatedGraph = Map<Ident, DeclarationInfo> * Graph
+    type AnnotatedGraph = DeclarationInfo * Graph
