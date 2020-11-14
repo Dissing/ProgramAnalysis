@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netcoreapp3.1</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Compile Include="Analysis.fs" />
+        <Compile Include="worklists\StackWorklist.fs" />
+        <Compile Include="analyses\DangerousVariables.fs" />
+        <Compile Include="analyses\FaintVariables.fs" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\FrontEnd\FrontEnd.fsproj" />
+    </ItemGroup>
+
+</Project>

@@ -60,3 +60,19 @@ module AST =
 
     type DeclarationInfo = Map<Ident,Declaration>
     type AST = DeclarationInfo * Statement List
+    
+    
+    let rec arithmeticFreeVariables (a: ArithmeticExpr) =
+        match a with
+        | Loc(Array(name, index)) -> Set.union (Set.singleton (Array(name, index))) (arithmeticFreeVariables index)
+        | Loc(other) -> Set.singleton other
+        | IntLiteral(_) -> Set.empty
+        | ArithmeticUnary(_, inner) -> arithmeticFreeVariables inner
+        | ArithmeticBinary(left, _, right) -> Set.union (arithmeticFreeVariables left) (arithmeticFreeVariables right)
+
+    let rec booleanFreeVariables (a: BooleanExpr) =
+            match a with
+            | BooleanLiteral(_) -> Set.empty
+            | BooleanUnary(_, inner) -> booleanFreeVariables inner
+            | Comparison(left, _, right) -> Set.union (arithmeticFreeVariables left) (arithmeticFreeVariables right)
+            | BooleanBinary(left, _, right) -> Set.union (booleanFreeVariables left) (booleanFreeVariables right)
