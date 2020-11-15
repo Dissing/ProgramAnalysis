@@ -16,8 +16,7 @@ module StrongComponents =
     
     
     // Strong components function
-    let StrongComps (pg : Graph) (rpIdxNode : rPOrder) =
-        // Assign function and loop recursion
+    let StrongComps (pg : Graph) (rpOrder : RPOrder) =
         let rec Assign (node : Node) (scList : (Node Set) List) (sc : Node Set) (v : Node Set) (edges : Edge List) =
             let sc = sc.Add(node)
             let v = v.Add(node)
@@ -36,10 +35,10 @@ module StrongComponents =
         let (n, e) = pg
         
         for i in 1..n.Length do
-            let node = rpIdxNode.Item(i)
+            let node = rpOrder.nodeAtIdx(i)
             if v.Contains(node)
                 then scList <- scList
                 else let (newSC, newV) = Assign node scList Set.empty v e
                      scList <- newSC :: scList
                      v <- newV
-        scList             
+        List.rev scList             
