@@ -26,22 +26,23 @@ module Main =
         failwithf "Help not yet implemented"
         
     let frontendPipeline (config: Config) (source: SourceFile) =
-        let ast = context {
-            let! tokens = Lexer.lex source.Content
-            return Parser.parse tokens
+        let graph = context {
+            let! ast = Lexer.lex source.Content >>= Parser.parse >>= Resolution.resolve
+            return EdgesFunction.runEdges ast
         }
-        failwith "Rest of pipeline not yet implemented"
+        match graph with
+        | Ok(g) -> g
+        | Error(msg, _) -> failwith msg
         
         
-    let analysisPipeline config (graph: ProgramGraph.Graph) =
+    let analysisPipeline config (graph: ProgramGraph.AnnotatedGraph) =
         failwith "Not yet implemented"
     
     [<EntryPoint>]
     let main args =
-        printfn "Hello World from F#!"
-        
         let opts =
                 []
+                |> addFlag "b" "benchmark" "run the benchmarking suite"
                 |> addFlag "h" "help" "print this help menu"
                 |> addOpt "o" "" "set output file name" "NAME"
                 |> addOpt "a" "analysis" "dump the result of a specific analysis: [reaching; live]" "ANALYSIS"
@@ -58,12 +59,13 @@ module Main =
             | o::os ->
                 let config =
                     match o.Name with
+                    | "b" -> { config with Benchmark = true }
                     | "h" -> { config with PrintUsage = true }
                     | "o" -> { config with OutputFile = o.Arg }
                     | "a" -> { config with AnalysisTarget = Some(parseAnalysisTarget o.Arg) }
                     | "s" -> { config with EarlyStageStop = Some(parseStage o.Arg) }
                     | other -> failwithf "Internal error: Unrecognized command line option %s" other
-                iterOpts config opts
+                iterOpts config os
             
         let config = iterOpts Config.Default matches.Opts
         
@@ -80,8 +82,10 @@ module Main =
             if not (File.Exists path) then failwithf "Error: Unable to open path %s" path
             let content = File.ReadAllText(path)
             let file = SourceFile(path, content)
-            let (graph, isDone) = frontendPipeline config file
-            if not isDone then
+            let graph = frontendPipeline config file
+            if config.Benchmark then
+                Benchmark.perform graph
+            else
                 analysisPipeline config graph
                     
         0 // return an integer exit code

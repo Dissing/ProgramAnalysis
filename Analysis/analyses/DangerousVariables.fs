@@ -8,7 +8,9 @@ open FrontEnd.ProgramGraph
 type DV = Set<AmalgamatedLocation>
 
 type DangerousVariableAnalysis() =
-    inherit Analysis<DV>()
+    inherit IAnalysis<DV>()
+    
+    override this.name = "Dangerous Variables"
     
     override this.isReverseAnalysis () = false
     
@@ -18,7 +20,10 @@ type DangerousVariableAnalysis() =
     
     override this.leastElement() = Set.empty
     
-    override this.analyseEdge ((src, action, dst): Edge) (labeling: DV) =
+    override this.initialElement ((annotation, _): AnnotatedGraph) =
+        AmalgamatedLocation.fromAnnotation annotation
+    
+    override this.analyseEdge ((_, action, _): Edge) (labeling: DV) =
         match action with
         | Allocate(_) | Free(_) -> labeling
         | Assign((AST.Array(x,index), expr)) ->
