@@ -25,15 +25,12 @@ let faintVariables1 () =
     let pg = EdgesFunction.runEdges (ast.unwrap())
     
     let x = AmalgamatedLocation.Variable("x:1");
-    let y = AmalgamatedLocation.Variable("y:2");
-    let z = AmalgamatedLocation.Variable("z:3");
     let w = AmalgamatedLocation.Variable("w:4");
     
-    let initials = Set.ofList []
     let worklist = StackWorklist.empty()
     
     let analysis = FaintVariableAnalysis()
-    let solution = analysis.analyse pg worklist initials
+    let (solution,_) = analysis.analyse pg worklist
     
     let expected = [
         [] //End
