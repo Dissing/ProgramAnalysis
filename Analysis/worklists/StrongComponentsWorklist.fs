@@ -16,6 +16,9 @@ type StrongComponentsWorklist(currentNodes: List<ProgramGraph.Node>, pendingNode
     static member empty(rpOrdering) = StrongComponentsWorklist([], Set.empty, rpOrdering)
     
     interface Analysis.IWorklist with
+    
+        member this.name = "Strong Components"
+        
         //NOTE: Upcast is for some strange reason not implicit in F#, so we need to explicitly add the
         //'upcast' keyword in front of the constructor in order to cast the concrete type to the interface type
         member this.extract() =
