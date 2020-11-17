@@ -10,7 +10,7 @@ open NUnit.Framework
 
 [<Test>]
 let faintVariables1 () =
-    let source = SourceFile("faintVariables.c", """
+    let source = """
         int x;
         int y;
         int z;
@@ -20,9 +20,8 @@ let faintVariables1 () =
         z := y;
         w := x;
         write w;
-        """)
-    let ast = Lexer.lex source.Content >>= Parser.parse >>= Resolution.resolve
-    let pg = EdgesFunction.runEdges (ast.unwrap())
+        """
+    let pg = FrontEnd.compile source
     
     let x = AmalgamatedLocation.Variable("x:1");
     let w = AmalgamatedLocation.Variable("w:4");

@@ -64,16 +64,13 @@ type IAnalysis<'L when 'L : comparison>() =
         work initialLabelling worklist 0
 
 [<AbstractClass>]
-type IBitVector<'D when 'D : comparison> =
-    inherit IAnalysis<Set<'D>>
+type IBitVector<'D when 'D : comparison>() =
+    inherit IAnalysis<Set<'D>>()
     
-    abstract member gen: Edge -> Set<'D>
-    
-    abstract member kill: Edge -> Set<'D>
+    abstract member genAndKill: Edge -> (Set<'D> * Set<'D>)
     
     override this.analyseEdge (edge: Edge) (x: Set<'D>) =
-        let killSet = this.kill edge
-        let genSet = this.gen edge
+        let (genSet, killSet) = this.genAndKill edge
         Set.union (Set.difference x killSet) genSet
        
 

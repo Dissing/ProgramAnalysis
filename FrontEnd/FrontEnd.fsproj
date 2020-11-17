@@ -20,6 +20,7 @@
         <Compile Include="ReversePostorder.fs" />
         <Compile Include="StrongComponents.fs" />
         <Compile Include="NaturalLoops.fs" />
+        <Compile Include="Library.fs" />
     </ItemGroup>
 
 </Project>

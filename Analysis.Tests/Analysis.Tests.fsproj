@@ -16,6 +16,7 @@
     <ItemGroup>
       <Compile Include="DangerousVariables.fs" />
       <Compile Include="FaintVariables.fs" />
+      <Compile Include="LiveVariables.fs" />
     </ItemGroup>
 
     <ItemGroup>

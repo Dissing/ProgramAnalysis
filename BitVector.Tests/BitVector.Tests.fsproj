@@ -14,11 +14,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Compile Include="ReachingDefinitions.fs" />
-      <Compile Include="LiveVariables.fs" />
-    </ItemGroup>
-
-    <ItemGroup>
       <ProjectReference Include="..\BitVector\BitVector.fsproj" />
     </ItemGroup>
 
