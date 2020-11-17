@@ -27,11 +27,10 @@ let dangerousVariables1 () =
     let y = AmalgamatedLocation.Variable("y:2");
     let A = AmalgamatedLocation.Array("A:3");
     
-    let initials = Set.ofList [x;y;A]
     let worklist = StackWorklist.empty()
     
     let analysis = DangerousVariableAnalysis()
-    let solution = analysis.analyse pg worklist initials
+    let (solution,_) = analysis.analyse pg worklist
     
     let expected = [
         [x;y;A]; //Initial
