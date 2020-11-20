@@ -5,22 +5,16 @@ open FrontEnd.ReversePostorder
 
 module StrongComponents =
     
-    // Compute edges going into nodes 
-    let rec EdgesIn (node : Node) (inputEdges : Edge List) (outputEdges : Edge List) =
-        match inputEdges with
-        | [] -> outputEdges
-        | (n1, act, n2)::tail -> if node = n2
-                                 then let outputEdges = (n1, act, n2)::outputEdges
-                                      EdgesIn node tail outputEdges
-                                 else EdgesIn node tail outputEdges
-    
+    // Compute edges going into nodes
+    let EdgesIn (node : Node) (edges : Edge List) =
+        List.fold (fun l (n1,act,n2) -> if node = n2 then (n1, act, n2)::l else l) [] edges
     
     // Strong components function
     let StrongComps (pg : Graph) (rpOrder : RPOrder) =
         let rec Assign (node : Node) (scList : (Node Set) List) (sc : Node Set) (v : Node Set) (edges : Edge List) =
             let sc = sc.Add(node)
             let v = v.Add(node)
-            let edgesIn = EdgesIn node edges []
+            let edgesIn = EdgesIn node edges
             AssignRec node edgesIn scList sc v edges
         and AssignRec (node : Node) (edgesIn : Edge List) (scList : (Node Set) List) (sc : Node Set) (v : Node Set) (totalEdgeList : Edge List) =            
             match edgesIn with
