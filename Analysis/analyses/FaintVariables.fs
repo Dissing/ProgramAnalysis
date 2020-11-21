@@ -8,7 +8,9 @@ open FrontEnd.ProgramGraph
 type FV = Set<AmalgamatedLocation>
 
 type FaintVariableAnalysis() =
-    inherit Analysis<FV>()
+    inherit IAnalysis<FV>()
+    
+    override this.name = "Faint Variables"
     
     override this.isReverseAnalysis () = true
     
@@ -18,7 +20,10 @@ type FaintVariableAnalysis() =
     
     override this.leastElement() = Set.empty
     
-    override this.analyseEdge ((src, action, dst): Edge) (labeling: FV) =
+    override this.initialElement (_: AnnotatedGraph) =
+        Set.empty
+    
+    override this.analyseEdge ((_, action, _): Edge) (labeling: FV) =
         match action with
         | Allocate(_) | Free(_) -> labeling
         | Assign((AST.Array(x,index), expr)) ->
