@@ -8,10 +8,12 @@
     <ItemGroup>
         <Compile Include="ArgumentParser.fs" />
         <Compile Include="Config.fs" />
+        <Compile Include="Benchmark.fs" />
         <Compile Include="Program.fs" />
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\Analysis\Analysis.fsproj" />
       <ProjectReference Include="..\FrontEnd\FrontEnd.fsproj" />
     </ItemGroup>
 

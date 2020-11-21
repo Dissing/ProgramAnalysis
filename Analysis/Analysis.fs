@@ -9,9 +9,13 @@ type IWorklist =
     
     abstract member insert: Node -> IWorklist
     
+    abstract member name: String
+    
     
 [<AbstractClass>]
-type Analysis<'L when 'L : comparison>() =
+type IAnalysis<'L when 'L : comparison>() =
+    
+    abstract member name: String
     
     abstract member isReverseAnalysis: unit -> bool
     
@@ -23,7 +27,9 @@ type Analysis<'L when 'L : comparison>() =
     
     abstract member analyseEdge: Edge -> 'L -> 'L
     
-    member this.analyse ((annotation, pg): AnnotatedGraph) (worklist: IWorklist) (initial: 'L) =
+    abstract member initialElement: AnnotatedGraph -> 'L
+    
+    member this.analyse ((annotation, pg): AnnotatedGraph) (worklist: IWorklist) =
         
         let (nodes, edges) =
             if this.isReverseAnalysis() then
@@ -31,15 +37,17 @@ type Analysis<'L when 'L : comparison>() =
             else
                 pg
  
-        let initial_labelling = Map.ofList (List.map (fun (q: Node) -> (q, this.leastElement())) nodes)
+        let initialLabelling = Map.ofList (List.map (fun (q: Node) -> (q, this.leastElement())) nodes)
         
         let worklist = List.fold (fun (w: IWorklist) (q: Node) -> w.insert(q)) worklist nodes
         
-        let initial_labelling = initial_labelling.Add(nodes.Head, initial)
+        let initialLabel = this.initialElement (annotation, (nodes, edges))
         
-        let rec work (sol: Map<Node, 'L>) (worklist: IWorklist) =
+        let initialLabelling = initialLabelling.Add(nodes.Head, initialLabel)
+        
+        let rec work (sol: Map<Node, 'L>) (worklist: IWorklist) (steps: int) =
             match worklist.extract() with
-            | None -> sol
+            | None -> (sol, steps)
             | Some((q,w)) ->
                 let (sol'',w'') =
                     List.filter (fun ((src, _, _): Edge) -> src = q) edges
@@ -51,21 +59,18 @@ type Analysis<'L when 'L : comparison>() =
                             else
                                 (sol', w')
                         ) (sol,w)
-                work sol'' w''
+                work sol'' w'' (steps + 1)
                 
-        work initial_labelling worklist
+        work initialLabelling worklist 0
 
 [<AbstractClass>]
-type BitVector<'D when 'D : comparison> =
-    inherit Analysis<Set<'D>>
+type IBitVector<'D when 'D : comparison>() =
+    inherit IAnalysis<Set<'D>>()
     
-    abstract member gen: Edge -> Set<'D>
-    
-    abstract member kill: Edge -> Set<'D>
+    abstract member killAndGen: Edge -> (Set<'D> * Set<'D>)
     
     override this.analyseEdge (edge: Edge) (x: Set<'D>) =
-        let killSet = this.kill edge
-        let genSet = this.gen edge
+        let (killSet, genSet) = this.killAndGen edge
         Set.union (Set.difference x killSet) genSet
        
 
@@ -78,6 +83,17 @@ type AmalgamatedLocation =
         | AST.Identifier(i) -> Variable(i)
         | AST.Array(i, _) -> Array(i)
         | AST.Field(s,f) -> Field(s,f)
+        
+    static member fromDeclaration (decl: AST.Declaration) =
+        match decl with
+        | AST.Integer i -> Set.singleton (Variable i)
+        | AST.ArrayDecl (i,_) -> Set.singleton (Array i)
+        | AST.Struct (i, fs) -> Set.ofList fs |> Set.map (fun f -> Field(i, f))
+        
+    static member fromAnnotation (annotation: AST.DeclarationInfo) =
+        annotation |> Map.toSeq |>
+        Seq.map (fun (_,d) -> AmalgamatedLocation.fromDeclaration d) |>
+        Seq.fold (fun s x -> Set.union s x) Set.empty
         
 module FreeVariables =
     let arithmeticFreeVariables (expr: AST.ArithmeticExpr) = 

@@ -9,9 +9,9 @@ let unwrap = function
 
 [<Test>]
 let flags() =
-    let shortArgs = ["program"; "-a"; "-c"; "-b"]
-    let longArgs = ["program"; "--A"; "--C"; "--B"]
-    let mixArgs = ["program"; "-a"; "--C"; "-b"]
+    let shortArgs = ["-a"; "-c"; "-b"]
+    let longArgs = ["--A"; "--C"; "--B"]
+    let mixArgs = ["-a"; "--C"; "-b"]
     
     let opts =
         []
@@ -37,9 +37,9 @@ let flags() =
 
 [<Test>]
 let opts() =
-    let shortArgs = ["program"; "-a=foo"; "-c=bar"; "-b=spam"]
-    let longArgs = ["program"; "--A=foo"; "--C=bar"; "--B=spam"]
-    let mixArgs = ["program"; "-a=foo"; "--C=bar"; "-b=spam"]
+    let shortArgs = ["-a=foo"; "-c=bar"; "-b=spam"]
+    let longArgs = ["--A=foo"; "--C=bar"; "--B=spam"]
+    let mixArgs = ["-a=foo"; "--C=bar"; "-b=spam"]
     
     let opts =
         []
@@ -63,7 +63,7 @@ let opts() =
 
 [<Test>]
 let flagsAndOpts() =
-    let args = ["program"; "-a=foo"; "--C"; "--B=bar"; "-d"]
+    let args = ["-a=foo"; "--C"; "--B=bar"; "-d"]
     
     let opts =
         []
@@ -83,7 +83,7 @@ let flagsAndOpts() =
     
 [<Test>]
 let freeArgs() =
-    let args = ["program"; "hello"; "world"]
+    let args = ["hello"; "world"]
     
     let opts =
         []
@@ -94,7 +94,7 @@ let freeArgs() =
     
 [<Test>]
 let floatingFreeArgs() =
-    let args = ["program"; "-p"; "hello.c"; "-o=lexer.txt";"--stage=lexer"]
+    let args = ["-p"; "hello.c"; "-o=lexer.txt";"--stage=lexer"]
     
     let opts =
         []

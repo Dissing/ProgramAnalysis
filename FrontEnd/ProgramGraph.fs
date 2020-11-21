@@ -9,7 +9,7 @@ module ProgramGraph =
     
     type Action =
         | Allocate of Declaration
-        | Free of Ident
+        | Free of Declaration
         | Assign of AssignExpr
         | AssignLiteral of AssignStructExpr
         | Condition of BooleanExpr
@@ -26,5 +26,5 @@ module ProgramGraph =
     
     let reverse ((nodes, edges): Graph) =
         let revNodes = List.rev nodes
-        let revEdges = List.map (fun (src,action,dst) -> (dst,action,src)) edges
+        let revEdges = List.map (fun (src,action,dst) -> (dst,action,src)) edges |> List.rev
         (revNodes, revEdges)

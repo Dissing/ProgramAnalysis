@@ -224,7 +224,7 @@ module Resolution =
                 let! (s, expr) = resolveArithmeticExpr s expr
                 return (s, Write expr)
             }
-        | Free (ident) -> failwithf "ICE: Free(%s) Stmt found during resolution!" ident
+        | Free (decl) -> failwithf "ICE: Free(%s) Stmt found during resolution!" (nameOfDecl decl)
 
     and resolveStmts (s: ResolutionState) =
         function
@@ -243,7 +243,7 @@ module Resolution =
             let (s, scope) = pop s
 
             let free_stmts =
-                List.map (fun (_, decl) -> Free(nameOfDecl decl)) scope
+                List.map (fun (_, decl) -> Free decl) scope
 
             return (s, stmts @ free_stmts)
         }

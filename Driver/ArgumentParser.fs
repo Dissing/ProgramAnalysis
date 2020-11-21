@@ -81,8 +81,8 @@ module ArgumentParser =
             | [] ->
                 Ok((List.rev optMatches, List.rev free))
          
-        if args.Length > 1 then
-            match iter [] [] args.Tail with
+        if args.Length > 0 then
+            match iter [] [] args with
             | Ok((optMatches, free)) -> Ok({ Opts = optMatches; Free = free })
             | Error(s) -> Error(s)
         else

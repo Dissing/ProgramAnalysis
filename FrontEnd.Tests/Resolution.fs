@@ -16,7 +16,7 @@ let resolveIntDecl() =
     let d2 = Integer n2
     
     let decls = [(n1, d1); (n2, d2)]
-    let stmts = [Allocate(d1); Allocate(d2); Free(n2); Free(n1)]
+    let stmts = [Allocate(d1); Allocate(d2); Free(d2); Free(d1)]
     
     let expected: Context<DeclarationInfo * Statement list> = Ok(Map.ofList decls, stmts)
     Assert.That(ast, Is.EqualTo(expected))
@@ -33,7 +33,7 @@ let resolveArrayDecl() =
     let d2 = ArrayDecl(n2, 10)
     
     let decls = [(n1,d1); (n2,d2)]
-    let stmts = [Allocate(d1); Allocate(d2); Free(n2); Free(n1)]
+    let stmts = [Allocate(d1); Allocate(d2); Free(d2); Free(d1)]
     
     let expected: Context<DeclarationInfo * Statement list> = Ok(Map.ofList decls, stmts)
     Assert.That(ast, Is.EqualTo(expected))
@@ -50,7 +50,7 @@ let resolveStructDecl() =
     let db = Struct (nb, ["x"])
     
     let decls = [(na, da); (nb, db)]
-    let stmts = [Allocate(da); Allocate(db); Free(nb); Free(na)]
+    let stmts = [Allocate(da); Allocate(db); Free(db); Free(da)]
     
     let expected: Context<DeclarationInfo * Statement list> = Ok(Map.ofList decls, stmts)
     Assert.That(ast, Is.EqualTo(expected))
@@ -68,7 +68,7 @@ let resolveInts() =
     let d2 = Integer n2
         
     let decls = [(n1, d1); (n2, d2)]
-    let stmts = [Allocate(d1); Allocate(d2); Assign(Identifier n1, IntLiteral 12); Assign(Identifier n2, IntLiteral 42); Free(n2); Free(n1)]
+    let stmts = [Allocate(d1); Allocate(d2); Assign(Identifier n1, IntLiteral 12); Assign(Identifier n2, IntLiteral 42); Free(d2); Free(d1)]
     
     let expected: Context<DeclarationInfo * Statement list> = Ok(Map.ofList decls, stmts)
     Assert.That(ast, Is.EqualTo(expected))
@@ -94,7 +94,7 @@ let resolveArithmeticExpr() =
     let e1 = ArithmeticBinary(Loc(Identifier n2), Multiply, Loc(Array(n3,idx_expr)))
     let e2 = ArithmeticBinary(Loc(Identifier n1), Add, e1)
     let e3 = ArithmeticBinary(e2, Subtract, Loc(Field(n4, "z")))
-    let stmts = [Allocate(d1); Allocate(d2); Allocate(d3); Allocate(d4); Assign(Identifier n1, e3); Free(n4); Free(n3); Free(n2); Free(n1)]
+    let stmts = [Allocate(d1); Allocate(d2); Allocate(d3); Allocate(d4); Assign(Identifier n1, e3); Free(d4); Free(d3); Free(d2); Free(d1)]
     
     let expected: Context<DeclarationInfo * Statement list> = Ok(Map.ofList decls, stmts)
     Assert.That(ast, Is.EqualTo(expected))
@@ -113,7 +113,7 @@ let resolveBooleanExpr() =
     let decls = [(n1,d1); (n2,d2)]
     
     let e = Comparison(Loc(Identifier n1), Greater, Loc(Identifier(n2)))
-    let stmts = [Allocate(d1); Allocate(d2); While(e,[]); Free(n2); Free(n1)]
+    let stmts = [Allocate(d1); Allocate(d2); While(e,[]); Free(d2); Free(d1)]
     
     let expected: Context<DeclarationInfo * Statement list> = Ok(Map.ofList decls, stmts)
     Assert.That(ast, Is.EqualTo(expected))
@@ -130,10 +130,10 @@ let resolveShadowing() =
     let d2 = Integer n2
  
     let preAssign =  Assign(Identifier n1, ArithmeticBinary(Loc(Identifier n1), Add, IntLiteral 1))
-    let loopBlock = [Allocate(d2); Assign(Identifier n2, ArithmeticBinary(Loc(Identifier n2), Add, IntLiteral 2)); Free(n2)]
+    let loopBlock = [Allocate(d2); Assign(Identifier n2, ArithmeticBinary(Loc(Identifier n2), Add, IntLiteral 2)); Free(d2)]
     let postAssign =  Assign(Identifier n1, ArithmeticBinary(Loc(Identifier n1), Add, IntLiteral 3))
     let decls = [(n1, d1); (n2, d2)]
-    let stmts = [Allocate(d1); preAssign; While(BooleanLiteral(true), loopBlock); postAssign; Free(n1)]
+    let stmts = [Allocate(d1); preAssign; While(BooleanLiteral(true), loopBlock); postAssign; Free(d1)]
     let expected: Context<DeclarationInfo * Statement list> = Ok(Map.ofList decls, stmts)
     Assert.That(ast, Is.EqualTo(expected))
     
@@ -149,7 +149,7 @@ let resolveStructLiteral() =
     let d2 = Struct(n2, ["x"])
     
     let decls = [(n1, d1); (n2, d2)]
-    let stmts = [Allocate(d1); Allocate(d2); StructAssign(n2, [("x", Loc(Identifier n1))]); Free(n2); Free(n1)]
+    let stmts = [Allocate(d1); Allocate(d2); StructAssign(n2, [("x", Loc(Identifier n1))]); Free(d2); Free(d1)]
     
     let expected: Context<DeclarationInfo * Statement list> = Ok(Map.ofList decls,stmts)
     
