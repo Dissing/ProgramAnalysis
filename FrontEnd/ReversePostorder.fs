@@ -6,7 +6,6 @@ module ReversePostorder =
     
     type RPOrder(order: Map<Node, int>) =
         
-        //Would like for this to be saved once and not re-computed each time 'nodeAtIdx' is called.
         let revOrder = Map.fold (fun (m : Map<Node, int>) node idx -> m.Add(idx, node)) Map.empty order
         
         let orderSort n1 n2 =
@@ -30,7 +29,7 @@ module ReversePostorder =
             List.sortWith orderSort (Set.toList nodes)
             
         member this.print() =
-            order |> Map.toList |> printfn "%A"
+            order |> Map.toList |> printfn "Reverse Postorder: %A"
             
         
     // The DFS tree given in edges of (Node * Node)
