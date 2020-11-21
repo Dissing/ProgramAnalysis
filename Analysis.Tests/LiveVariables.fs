@@ -36,7 +36,6 @@ let assignVar () =
     let analysis = LiveVariablesAnalysis()
     let worklist = StackWorklist.empty()
     let sol = analysis.analyse graph worklist |> extractSolution
-    printfn "%A" sol
     Assert.That(sol.Length, Is.EqualTo 7)
     Assert.That(sol.[0], Is.Empty)
     Assert.That(sol.[1], Is.Empty)

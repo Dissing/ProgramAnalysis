@@ -22,48 +22,48 @@ type LiveVariablesAnalysis() =
     
     override this.initialElement(_: AnnotatedGraph) = Set.empty
     
-    override this.genAndKill((_, action, _): Edge) =
+    override this.killAndGen((_, action, _): Edge) =
         match action with
         | Allocate(AST.Integer name) ->
-            let kill = Set.empty
-            let gen = Set.singleton (Variable name)
+            let kill = Set.singleton (Variable name)
+            let gen = Set.empty
             (kill, gen)
         | Allocate(AST.ArrayDecl(name, _)) ->
-            let kill = Set.empty
-            let gen = Set.singleton (Array name)
+            let kill = Set.singleton (Array name)
+            let gen = Set.empty
             (kill, gen)
         | Allocate(AST.Struct(name, fields)) ->
-            let kill = Set.empty
-            let gen = List.map (fun field -> Field(name,field)) fields |> Set.ofList
+            let kill = List.map (fun field -> Field(name,field)) fields |> Set.ofList
+            let gen = Set.empty
             (kill, gen)
         | Free(_) -> (Set.empty, Set.empty)
         | Assign((AST.Array(x,index), expr)) ->
-            let kill = Set.union (arithmeticFreeVariables index) (arithmeticFreeVariables expr)
-            let gen = Set.empty
+            let kill = Set.empty
+            let gen = Set.union (arithmeticFreeVariables index) (arithmeticFreeVariables expr)
             (kill, gen)
         | Assign(x, expr) ->
-            let kill = arithmeticFreeVariables expr
-            let gen = Set.singleton (AmalgamatedLocation.fromLocation x)
+            let kill = Set.singleton (AmalgamatedLocation.fromLocation x)
+            let gen = arithmeticFreeVariables expr
             (kill, gen)
         | AssignLiteral(s, exprs) ->
             List.fold (fun (kill, gen) (field, expr) ->
                 let singleton = Set.singleton (Field (s, field))
                 let fv = arithmeticFreeVariables expr
-                (Set.union kill fv, Set.union gen singleton)
+                (Set.union kill singleton, Set.union gen fv)
             ) (Set.empty, Set.empty) exprs
         | Condition(expr) ->
-            let kill = booleanFreeVariables expr
-            let gen = Set.empty
+            let kill = Set.empty
+            let gen = booleanFreeVariables expr
             (kill, gen)
         | Read(AST.Array(x, index)) ->
-            let kill = arithmeticFreeVariables index
-            let gen = Set.empty
+            let kill = Set.empty
+            let gen = arithmeticFreeVariables index
             (kill, gen)
         | Read(x) ->
-            let kill = Set.empty
-            let gen = Set.singleton (AmalgamatedLocation.fromLocation x)
+            let kill = Set.singleton (AmalgamatedLocation.fromLocation x)
+            let gen = Set.empty
             (kill, gen)
         | Write(expr) ->
-            let kill = arithmeticFreeVariables expr
-            let gen = Set.empty
+            let kill = Set.empty
+            let gen = arithmeticFreeVariables expr
             (kill, gen)

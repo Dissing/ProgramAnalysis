@@ -41,7 +41,7 @@ type IAnalysis<'L when 'L : comparison>() =
         
         let worklist = List.fold (fun (w: IWorklist) (q: Node) -> w.insert(q)) worklist nodes
         
-        let initialLabel = this.initialElement (annotation, pg)
+        let initialLabel = this.initialElement (annotation, (nodes, edges))
         
         let initialLabelling = initialLabelling.Add(nodes.Head, initialLabel)
         
@@ -67,10 +67,10 @@ type IAnalysis<'L when 'L : comparison>() =
 type IBitVector<'D when 'D : comparison>() =
     inherit IAnalysis<Set<'D>>()
     
-    abstract member genAndKill: Edge -> (Set<'D> * Set<'D>)
+    abstract member killAndGen: Edge -> (Set<'D> * Set<'D>)
     
     override this.analyseEdge (edge: Edge) (x: Set<'D>) =
-        let (genSet, killSet) = this.genAndKill edge
+        let (killSet, genSet) = this.killAndGen edge
         Set.union (Set.difference x killSet) genSet
        
 
