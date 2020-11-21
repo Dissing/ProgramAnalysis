@@ -9,7 +9,7 @@ open NUnit.Framework
 
 
 [<Test>]
-let faintVariables1 () =
+let faintVariables1() =
     let source = """
         int x;
         int y;
