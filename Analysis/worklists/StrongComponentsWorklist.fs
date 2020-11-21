@@ -4,7 +4,7 @@ open FrontEnd
 
 
 type StrongComponentsWorklist(currentNodes: List<ProgramGraph.Node>, pendingNodes: Set<ProgramGraph.Node>, rpOrdering: ReversePostorder.RPOrder, scRelation : ComponentRelation.ComponentRelation) =
-                  
+    
     static member empty(graph: ProgramGraph.Graph) =
         let (_, rpOrdering) = ReversePostorder.DFST graph
         let components = StrongComponents.StrongComps graph rpOrdering
@@ -17,9 +17,11 @@ type StrongComponentsWorklist(currentNodes: List<ProgramGraph.Node>, pendingNode
         member this.extract() =
             match currentNodes with
             | q::qs -> Some(q, upcast StrongComponentsWorklist(qs, pendingNodes, rpOrdering, scRelation))
-            | [] -> let (S, pPrime) = scRelation.GetTopNodes pendingNodes
-                    let VrP = rpOrdering.getOrder(S)
-                    Some((VrP.Head), upcast StrongComponentsWorklist(VrP.Tail, pPrime, rpOrdering, scRelation))
+            | [] -> if pendingNodes.IsEmpty
+                    then None
+                    else let (S, pPrime) = scRelation.GetTopNodes pendingNodes
+                         let VrP = rpOrdering.getOrder(S)
+                         Some((VrP.Head), upcast StrongComponentsWorklist(VrP.Tail, pPrime, rpOrdering, scRelation))
             
         member this.insert(q) =
             if List.contains q currentNodes
