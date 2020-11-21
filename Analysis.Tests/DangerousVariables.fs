@@ -10,7 +10,7 @@ open NUnit.Framework
 
 [<Test>]
 let dangerousVariables1 () =
-    let source = SourceFile("dangerousVariables1.c", """
+    let source = """
         int x;
         int y;
         int[12] A;
@@ -19,9 +19,8 @@ let dangerousVariables1 () =
         y := x * 2;
         x := 0;
         y := x * 2;
-        """)
-    let ast = Lexer.lex source.Content >>= Parser.parse >>= Resolution.resolve
-    let pg = EdgesFunction.runEdges (ast.unwrap())
+        """
+    let pg = FrontEnd.compile source
     
     let x = AmalgamatedLocation.Variable("x:1");
     let y = AmalgamatedLocation.Variable("y:2");

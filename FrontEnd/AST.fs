@@ -48,7 +48,7 @@ module AST =
            | Struct of Ident * Ident List
     and Statement =
         | Allocate of Declaration
-        | Free of Ident
+        | Free of Declaration
         | Assign of Location * ArithmeticExpr
         | StructAssign of Ident * (Ident * ArithmeticExpr) list
         | If of BooleanExpr * Block * Block option

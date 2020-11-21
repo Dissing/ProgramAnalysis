@@ -14,8 +14,13 @@
     </ItemGroup>
 
     <ItemGroup>
+      <Compile Include="Library.fs" />
       <Compile Include="DangerousVariables.fs" />
       <Compile Include="FaintVariables.fs" />
+      <Compile Include="LiveVariables.fs" />
+      <Compile Include="ReachingDefinitions.fs" />
+      <Compile Include="QueueWorklist.fs" />
+      <Compile Include="StackWorklist.fs" />
     </ItemGroup>
 
     <ItemGroup>

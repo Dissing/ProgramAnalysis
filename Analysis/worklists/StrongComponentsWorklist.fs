@@ -5,12 +5,15 @@ open FrontEnd
 
 type StrongComponentsWorklist(currentNodes: List<ProgramGraph.Node>, pendingNodes: Set<ProgramGraph.Node>, rpOrdering: ReversePostorder.RPOrder, scRelation : ComponentRelation.ComponentRelation) =
                   
-    //static member empty(rpOrdering) = StrongComponentsWorklist([], Set.empty, rpOrdering, ???)
+    static member empty(graph: ProgramGraph.Graph) =
+        let (_, rpOrdering) = ReversePostorder.DFST graph
+        let components = StrongComponents.StrongComps graph rpOrdering
+        let relation = ComponentRelation.ComponentRelation(components, graph)
+        StrongComponentsWorklist([], Set.empty, rpOrdering, relation)
     
     interface Analysis.IWorklist with
-
         member this.name = "Strong Components"
-        
+
         member this.extract() =
             match currentNodes with
             | q::qs -> Some(q, upcast StrongComponentsWorklist(qs, pendingNodes, rpOrdering, scRelation))
