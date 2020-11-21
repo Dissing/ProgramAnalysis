@@ -7,6 +7,9 @@ type NaturalComponentsWorkList(currentNodes: List<ProgramGraph.Node>, pendingNod
     //static member empty(rpOrdering) = NaturalComponentsWorkList([], Set.empty, rpOrdering, ???)
     
     interface Analysis.IWorklist with
+    
+        member this.name = "Natural Components"
+        
         member this.extract() =
             match currentNodes with
             | q::qs -> Some(q, upcast NaturalComponentsWorkList(qs, pendingNodes, rpOrdering, ncRelation))
