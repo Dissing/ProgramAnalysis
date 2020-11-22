@@ -21,6 +21,7 @@
       <Compile Include="ReachingDefinitions.fs" />
       <Compile Include="QueueWorklist.fs" />
       <Compile Include="StackWorklist.fs" />
+      <Compile Include="SignDetection.fs" />
     </ItemGroup>
 
     <ItemGroup>
