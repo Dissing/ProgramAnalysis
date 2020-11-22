@@ -10,6 +10,7 @@ type Sign =
     | Plus
     | Minus
     | Zero
+    
 
 type DS = Map<AmalgamatedLocation,Set<Sign>>
 
@@ -98,8 +99,9 @@ type SignDetectionAnalysis(graph: AnnotatedGraph) =
     override this.leastUpperBound (x: DS) (y: DS) =
         locations |> Set.toSeq |> Seq.map (fun loc -> (loc, Set.union x.[loc] y.[loc])) |> Map.ofSeq
     
-    override this.leastElement() = Map.empty
-    
+    override this.leastElement() = 
+        locations |> Set.toSeq |> Seq.map (fun loc -> (loc, Set.empty)) |> Map.ofSeq
+
     override this.initialElement ((annotation, _): AnnotatedGraph) =
         locations |> Set.toSeq |> Seq.map (fun loc -> (loc, Set.ofList [Sign.Zero; Sign.Minus; Sign.Plus])) |> Map.ofSeq
     override this.analyseEdge ((_, action, _): Edge) (labeling: DS) =
