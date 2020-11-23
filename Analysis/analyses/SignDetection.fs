@@ -52,14 +52,14 @@ type SignDetectionAnalysis(graph: AnnotatedGraph) =
     
     let divisionSign pair = match pair with
                             | (_, Sign.Zero) -> Set.empty
-                            | (x, Sign.Plus) -> Set.ofList [x]
-                            | (x,Sign.Minus) -> Set.ofList [negateSign x]
+                            | (x, Sign.Plus) -> Set.ofList [x; Sign.Zero]
+                            | (x,Sign.Minus) -> Set.ofList [negateSign x; Sign.Zero]
                             | _ -> Set.empty // Never happens
                             
     let moduloSign pair = match pair with
                             | (_, Sign.Zero)  -> Set.empty
                             | (Sign.Zero, _) -> Set.ofList [Sign.Zero]
-                            | (_,Sign.Minus) -> Set.ofList [Sign.Minus; Sign.Zero]
+                            | (Sign.Minus, _) -> Set.ofList [Sign.Minus; Sign.Zero]
                             | _ -> Set.ofList [Sign.Zero; Sign.Plus]
             
     let rec handlePairs pairs opr signs =

@@ -37,7 +37,7 @@ let signDetection1() =
         [Set.ofList [Sign.Zero]] //x := 0;
         [Set.ofList [Sign.Minus; Sign.Plus; Sign.Zero]] //x := -21+23;
         [Set.ofList [Sign.Minus]] //x := -21*23;
-        [Set.ofList [Sign.Minus]] //x := -21/23;
+        [Set.ofList [Sign.Minus; Sign.Zero]] //x := -21/23;
         [Set.ofList [Sign.Minus]] //x := -21-23;
         [Set.empty] //x := -21/0;
         [Set.ofList [Sign.Minus; Sign.Plus; Sign.Zero]] // free x
@@ -189,15 +189,15 @@ let signDetectionDivision() =
     let expected = [
         [Set.ofList [Sign.Minus; Sign.Plus; Sign.Zero]] //start
         [Set.ofList [Sign.Zero]] //int x;
-        [Set.ofList [Sign.Plus]] //x := -24/-24;
+        [Set.ofList [Sign.Plus; Sign.Zero]] //x := -24/-24;
         [Set.empty] //x := -24/0;
-        [Set.ofList [Sign.Minus]] //x := -24/24;
+        [Set.ofList [Sign.Minus; Sign.Zero]] //x := -24/24;
         [Set.ofList [Sign.Zero]] //x := 0/-24;
         [Set.empty] //x := 0/0;
         [Set.ofList [Sign.Zero]] //x := 0/24;
-        [Set.ofList [Sign.Minus]] //x := 24/-24;
+        [Set.ofList [Sign.Minus; Sign.Zero]] //x := 24/-24;
         [Set.empty] //x := 24/0;
-        [Set.ofList [Sign.Plus]] //x := 24/24;
+        [Set.ofList [Sign.Plus; Sign.Zero]] //x := 24/24;
         [Set.ofList [Sign.Minus; Sign.Plus; Sign.Zero]] // free x
     ]
     
@@ -273,11 +273,11 @@ let signDetectionModulo() =
         [Set.ofList [Sign.Zero]] //int x;
         [Set.ofList [Sign.Zero; Sign.Minus]] //x := -24%-24;
         [Set.empty] //x := -24%0;
-        [Set.ofList [Sign.Zero; Sign.Plus]] //x := -24%24;
+        [Set.ofList [Sign.Zero; Sign.Minus]] //x := -24%24;
         [Set.ofList [Sign.Zero]] //x := 0%-24;
         [Set.empty] //x := 0%0;
         [Set.ofList [Sign.Zero]] //x := 0%24;
-        [Set.ofList [Sign.Minus; Sign.Zero]] //x := 24%-24;
+        [Set.ofList [Sign.Plus; Sign.Zero]] //x := 24%-24;
         [Set.empty] //x := 24%0;
         [Set.ofList [Sign.Plus; Sign.Zero]] //x := 24%24;
         [Set.ofList [Sign.Minus; Sign.Plus; Sign.Zero]] // free x
