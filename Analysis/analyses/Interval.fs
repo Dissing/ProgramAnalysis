@@ -1,106 +1,43 @@
 ﻿namespace Analysis.Analyses
 open Analysis
+open Analysis.Analyses
 open FrontEnd
 open FrontEnd.ProgramGraph
 
-[<CustomComparison>]
-type LowerBound =
+type Bound =
     | NegInf
-    | Lower of int
+    | Inf
+    | Val of int
     
-    member this.greaterThanOrEqual (other: LowerBound) =
+    member this.lessThanOrEqual (other: Bound) =
+        match (this, other) with
+        | (NegInf, NegInf) -> true
+        | (NegInf, _) -> true
+        | (_, NegInf) -> false
+        | (Inf, Inf) -> true
+        | (_, Inf) -> true
+        | (Inf, _) -> false
+        | (Val x, Val y) -> x <= y
+    
+    member this.greaterThanOrEqual (other: Bound) =
         match (this, other) with
         | (NegInf, NegInf) -> true
         | (NegInf, _) -> false
         | (_, NegInf) -> true
-        | (Lower x, Lower y) -> x >= y
+        | (Inf, Inf) -> true
+        | (Inf, _) -> true
+        | (_, Inf) -> false
+        | (Val x, Val y) -> x >= y
         
-    member this.least (other: LowerBound) =
-        if this.greaterThanOrEqual(other) then other else this
+    member this.least (other: Bound) =
+        if this.lessThanOrEqual(other) then this else other
         
-    interface System.IComparable<LowerBound> with 
-        member this.CompareTo other =
-            match (this, other) with
-            | (NegInf, NegInf) -> 0
-            | (NegInf, _) -> -1
-            | (_, NegInf) -> 1
-            | (Lower x, Lower y) -> compare x y
+    member this.greatest (other: Bound) =
+        if this.greaterThanOrEqual(other) then this else other
         
-    static member (+) (left, right) =
-        match (left,right) with
-        | (NegInf, _) -> NegInf
-        | (_, NegInf) -> NegInf
-        | (Lower x, Lower y) -> Lower (x + y)
-    
-    static member (-) (left, right) =
-        match (left,right) with
-        | (NegInf, _) -> NegInf
-        | (_, NegInf) -> NegInf
-        | (Lower x, Lower y) -> Lower (x - y)
-                
-    static member (*) (left, right) =
-        match (left,right) with
-        | (NegInf, _) -> NegInf
-        | (_, NegInf) -> NegInf
-        | (Lower x, Lower y) -> Lower (x * y)
-                
-    static member (/) (left, right) =
-        match (left,right) with
-        | (NegInf, _) -> NegInf
-        | (_, NegInf) -> NegInf
-        | (Lower x, Lower y) -> Lower (x / y)
-            
-[<CustomComparison>]
-type UpperBound =
-    | Inf
-    | Upper of int
-    
-    member this.lessThanOrEqual (other: UpperBound) =
-            match (this, other) with
-            | (Inf, Inf) -> true
-            | (Inf, _) -> false
-            | (_, Inf) -> true
-            | (Upper x, Upper y) -> x <= y
-            
-    member this.greatest (other: UpperBound) =
-        if this.lessThanOrEqual(other) then other else this
-        
-    interface System.IComparable<UpperBound> with 
-        member this.CompareTo other =
-            match (this, other) with
-            | (Inf, Inf) -> 0
-            | (Inf, _) -> 1
-            | (_, Inf) -> -1
-            | (Upper x, Upper y) -> compare x y
-        
-    static member (+) (left, right) =
-        match (left,right) with
-        | (Inf, _) -> Inf
-        | (_, Inf) -> Inf
-        | (Upper x, Upper y) -> Upper (x + y)
-        
-    static member (-) (left, right) =
-        match (left,right) with
-        | (Inf, _) -> Inf
-        | (_, Inf) -> Inf
-        | (Upper x, Upper y) -> Upper (x - y)
-                    
-    static member (*) (left, right) =
-        match (left,right) with
-        | (Inf, _) -> Inf
-        | (_, Inf) -> Inf
-        | (Upper x, Upper y) -> Upper (x * y)
-                    
-    static member (/) (left, right) =
-        match (left,right) with
-        | (Inf, _) -> Inf
-        | (_, Inf) -> Inf
-        | (Upper x, Upper y) -> Upper (x / y)
-        
-
 type Interval =
     | Bot
-    | I of LowerBound * UpperBound
+    | I of Bound * Bound
     
     member this.lessThanOrEqual (other: Interval) =
         match (this, other) with
@@ -120,6 +57,9 @@ type IA = Map<AmalgamatedLocation, Interval>
 
 type IntervalAnalysis(graph: AnnotatedGraph, minInt: int, maxInt: int) =
     inherit IAnalysis<IA>()
+    
+    let minBound = Val minInt
+    let maxBound = Val maxInt
     
     let locations =
         let (annotation, _) = graph
@@ -141,35 +81,89 @@ type IntervalAnalysis(graph: AnnotatedGraph, minInt: int, maxInt: int) =
         
     override this.initialElement ((annotation, _): AnnotatedGraph) = failwith "Not yet implemented"
     
-    member this.addition (z11:LowerBound , z12:UpperBound) (z21: LowerBound, z22: UpperBound) =
-        let zmin = z11 + z21
-        let zmax = z12 + z22
+    member this.addition (z11:Bound , z12:Bound) (z21: Bound, z22: Bound) =
         let z1 =
-            if zmin > maxInt then Lower maxInt
-            elif minInt <= zmin && zmin <= maxInt then Lower zmin
+            match (z11, z21) with
+            | (Inf, _) | (_, Inf) -> failwith "Positive infinity in lower bound addition"
+            | (NegInf, _) | (_, NegInf) -> NegInf
+            | (Val z11, Val z21) -> 
+                let zmin = Val (z11 + z21)
+                if zmin.greaterThanOrEqual(maxBound) then maxBound
+                elif zmin.greaterThanOrEqual(minBound) && zmin.lessThanOrEqual(maxBound) then zmin
+                else NegInf
+        let z2 =
+            match (z12, z22) with
+            | (NegInf, _) | (_, NegInf) -> failwith "Negative infinity in lower bound addition"
+            | (Inf, _) | (_, Inf) -> Inf
+            | (Val z12, Val z22) -> 
+                let zmax = Val (z12 + z22)
+                if zmax.lessThanOrEqual(minBound) then minBound
+                elif zmax.greaterThanOrEqual(minBound) && zmax.lessThanOrEqual(maxBound) then zmax
+                else Inf
+        I(z1,z2)
+        
+    member this.subtraction (z11:Bound , z12:Bound) (z21: Bound, z22: Bound) =
+        let z1 =
+            match (z11, z22) with
+            | (Inf, _) | (_, NegInf) -> failwith "Unexpected infinity in lower bound subtraction"
+            | (NegInf, _) | (_, Inf) -> NegInf
+            | (Val z11, Val z22) -> 
+                let zmin = Val (z11 - z22)
+                if zmin.greaterThanOrEqual(maxBound) then maxBound
+                elif zmin.greaterThanOrEqual(minBound) && zmin.lessThanOrEqual(maxBound) then zmin
+                else NegInf
+        let z2 =
+            match (z12, z21) with
+            | (NegInf, _) | (_, Inf) -> failwith "Negative infinity in lower bound subtraction"
+            | (Inf, _) | (_, NegInf) -> Inf
+            | (Val z12, Val z21) -> 
+                let zmax = Val (z12 - z21)
+                if zmax.lessThanOrEqual(minBound) then minBound
+                elif zmax.greaterThanOrEqual(minBound) && zmax.lessThanOrEqual(maxBound) then zmax
+                else Inf
+        I(z1,z2)
+        
+        
+    member this.multiplication (z11: Bound, z12: Bound) (z21: Bound, z22: Bound) =
+        let product = function
+            | (NegInf, NegInf) -> Inf
+            | (Inf, Inf) -> Inf
+            | (NegInf, Inf) | (Inf, NegInf) -> NegInf
+            | (NegInf, Val x) | (Val x, NegInf) when x > 0 -> NegInf
+            | (NegInf, Val x) | (Val x, NegInf) when x < 0 -> Inf
+            | (NegInf, Val _) | (Val _, NegInf) -> Val 0
+            | (Inf, Val x) | (Val x, Inf) when x > 0 -> Inf
+            | (Inf, Val x) | (Val x, Inf) when x < 0 -> NegInf
+            | (Inf, Val _) | (Val _, Inf) -> Val 0
+            | (Val x, Val y) -> Val (x*y)
+        
+        let min a b =
+            match (a,b) with
+            | (NegInf, _) | (_, NegInf) -> NegInf
+            | (Inf, other) | (other, Inf) -> other
+            | (Val x, Val y) -> Val (if x <= y then x else y)
+            
+        let max a b =
+            match (a,b) with
+            | (NegInf, other) | (other, NegInf) -> other
+            | (Inf, _) | (_, Inf) -> Inf
+            | (Val x, Val y) -> Val (if x >= y then x else y)
+            
+        let z1 =
+            let zmin: Bound = min (min (product(z11,z21)) (product(z11,z22))) (min (product(z12,z21)) (product(z12,z22)))
+            if zmin.greaterThanOrEqual(maxBound) then maxBound
+            elif zmin.greaterThanOrEqual(minBound) && zmin.lessThanOrEqual(maxBound) then zmin
             else NegInf
         let z2 =
-            if zmax < minInt then Upper minInt
-            elif minInt <= zmax && zmax <= maxInt then Upper zmax
+            let zmax: Bound = max (max (product(z11,z21)) (product(z11,z22))) (max (product(z12,z21)) (product(z12,z22)))
+            if zmax.lessThanOrEqual(minBound) then minBound
+            elif zmax.greaterThanOrEqual(minBound) && zmax.lessThanOrEqual(maxBound) then zmax
             else Inf
         I(z1,z2)
+        
+    member this.division (z11: Bound, z12: Bound) (z21: Bound, z22: Bound) = failwith "Not yet implemented"
     
-    (*member this.multiply (left: Interval) (right: Interval) =
-            match (left, right) with
-            | (Bot, _) -> Bot
-            | (_, Bot) -> Bot
-            | (I(Lower z11, Upper z12), I(Lower z21, Upper z22)) -> 
-                let zmin = min (min (z11 * z21) (z11 * z22)) (min (z12 * z21) (z12 * z22))
-                let zmax = max (max (z11 * z21) (z11 * z22)) (max (z12 * z21) (z12 * z22))
-                let z1 =
-                    if zmin > maxInt then Lower maxInt
-                    elif minInt <= zmin && zmin <= maxInt then Lower zmin
-                    else NegInf
-                let z2 =
-                    if zmax < minInt then Upper minInt
-                    elif minInt <= zmax && zmax <= maxInt then Upper zmax
-                    else Inf
-                I(z1,z2)*)
+    member this.modulo (z11: Bound, z12: Bound) (z21: Bound, z22: Bound) = failwith "Not yet implemented"
                     
     
     member this.arithmetic (labeling: IA) = function
@@ -177,19 +171,37 @@ type IntervalAnalysis(graph: AnnotatedGraph, minInt: int, maxInt: int) =
             labeling.[AmalgamatedLocation.fromLocation loc]
         | AST.IntLiteral(n) ->
             if n < minInt then
-                I(NegInf, Upper minInt)
+                I(NegInf, minBound)
             elif n > maxInt then
-                I(Lower maxInt, Inf)
+                I(maxBound, Inf)
             else
-                I(Lower n, Upper n)
-        | AST.ArithmeticUnary(AST.Negation, inner) -> failwith "Not yet implemented"
-        | AST.ArithmeticBinary(left, op, right) -> failwith "Not yet implemented"
+                I(Val n, Val n)
+        | AST.ArithmeticUnary(AST.Negation, inner) ->
+            match this.arithmetic labeling inner with
+            | Bot -> Bot
+            | I(z1, z2) -> this.multiplication (Val -1, Val -1) (z1,z2)
+            
+        | AST.ArithmeticBinary(left, op, right) ->
+            let l = this.arithmetic labeling left
+            let r = this.arithmetic labeling right
+            match (l,r) with
+            | (Bot, _) -> Bot
+            | (_, Bot) -> Bot
+            | (I(z11, z12), I(z21, z22)) ->
+                let z1 = (z11, z12)
+                let z2 = (z21, z22)
+                match op with
+                | AST.Add -> this.addition z1 z2
+                | AST.Subtract -> this.subtraction z1 z2
+                | AST.Multiply -> this.multiplication z1 z2
+                | AST.Divide -> this.division z1 z2
+                | AST.Modulo -> this.modulo z1 z2
         
     override this.analyseEdge ((_, action, _): Edge) (labeling: IA) =
         match action with
         | Allocate(x) ->
             AmalgamatedLocation.fromDeclaration x |>
-                Set.fold (fun s l -> s.Add (l, I(Lower 0, Upper 0))) labeling
+                Set.fold (fun s l -> s.Add (l, I(Val 0, Val 0))) labeling
         | Free(x) ->
             AmalgamatedLocation.fromDeclaration x |>
                 Set.fold (fun s l -> s.Add (l, I(NegInf, Inf))) labeling
