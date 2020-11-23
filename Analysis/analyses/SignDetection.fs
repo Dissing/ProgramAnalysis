@@ -30,7 +30,7 @@ type SignDetectionAnalysis(graph: AnnotatedGraph) =
         match sign with
         | Sign.Zero -> Sign.Zero
         | Sign.Plus -> Sign.Minus
-        | Sign.Minus -> Sign.Minus
+        | Sign.Minus -> Sign.Plus
         
     let plusSign pair = match pair with
                         | (x,y) when x = y  -> Set.ofList [x]
@@ -39,23 +39,28 @@ type SignDetectionAnalysis(graph: AnnotatedGraph) =
                         | _ -> Set.ofList [Sign.Plus; Sign.Minus; Sign.Zero]
     
     let minusSign pair = match pair with
-                         | (x,y) when y = Sign.Minus  -> plusSign (x,y)
-                         | (x, y) when y = Sign.Zero -> Set.ofList [x]
+                         | (x, Sign.Minus)  -> plusSign (x,Sign.Plus)
+                         | (x, Sign.Zero) -> Set.ofList [x]
                          | (Sign.Plus, Sign.Plus) -> Set.ofList [Sign.Plus; Sign.Minus; Sign.Zero]
-                         | (x, _) -> Set.ofList [x]
+                         | (_, _) -> Set.ofList [Sign.Minus]
     
     let multiplySign pair = match pair with
-                            | (x, y) when y = Sign.Zero || x = Sign.Zero  -> Set.ofList [Sign.Zero]
+                            | (_, Sign.Zero) | (Sign.Zero, _)  -> Set.ofList [Sign.Zero]
                             | (Sign.Plus, Sign.Minus) -> Set.ofList [Sign.Minus]
                             | (Sign.Minus, Sign.Plus) -> Set.ofList [Sign.Minus]
                             | _ -> Set.ofList [Sign.Plus]
     
     let divisionSign pair = match pair with
-                            | (_, y) when y = Sign.Zero  -> Set.empty
+                            | (_, Sign.Zero) -> Set.empty
                             | (x, Sign.Plus) -> Set.ofList [x]
                             | (x,Sign.Minus) -> Set.ofList [negateSign x]
                             | _ -> Set.empty // Never happens
                             
+    let moduloSign pair = match pair with
+                            | (_, Sign.Zero)  -> Set.empty
+                            | (Sign.Zero, _) -> Set.ofList [Sign.Zero]
+                            | (_,Sign.Minus) -> Set.ofList [Sign.Minus; Sign.Zero]
+                            | _ -> Set.ofList [Sign.Zero; Sign.Plus]
             
     let rec handlePairs pairs opr signs =
         match pairs with
@@ -69,7 +74,11 @@ type SignDetectionAnalysis(graph: AnnotatedGraph) =
                                               Set.empty
                                           else
                                               handlePairs tail opr (Set.union signs s)
-                          | AST.Modulo -> Set.empty
+                          | AST.Modulo -> let s = moduloSign pair
+                                          if Set.isEmpty s then
+                                              Set.empty
+                                          else
+                                              handlePairs tail opr (Set.union signs s)
     
     let handleOpr opr signs1 signs2 =
         if Set.isEmpty signs1 || Set.isEmpty signs2 then
