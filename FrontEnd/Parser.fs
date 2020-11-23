@@ -236,6 +236,7 @@ module Parser =
                     | TokenKind.MINUS -> Subtract
                     | TokenKind.MULTIPLICATION -> Multiply
                     | TokenKind.DIVISION -> Divide
+                    | TokenKind.MODULO -> Modulo
                     | other -> failwithf "Unexpected infix arithmetic operator %A" other
 
                 let (ctx, right) =
