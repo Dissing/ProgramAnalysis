@@ -80,3 +80,209 @@ let signDetection2() =
     
     let solution = solution |> Map.toList |> List.map (fun (_,v) -> Map.toList v |> List.map (fun (_, v) -> v)) 
     Assert.That(solution, Is.EqualTo(expected))
+
+[<Test>]
+let signDetectionPlus() =
+    let source = """
+        int x;
+        x := -24+-24;
+        x := -24+0;
+        x := -24+24;
+        x := 0+-24;
+        x := 0+0;
+        x := 0+24;
+        x := 24+-24;
+        x := 24+0;
+        x := 24+24;
+        """
+    let pg = FrontEnd.compile source
+    
+    let x = AmalgamatedLocation.Variable("x:1");
+    
+    let worklist = StackWorklist.empty()
+    
+    let analysis = SignDetectionAnalysis(pg)
+    let (solution,_) = analysis.analyse pg worklist
+    
+    let expected = [
+        [Set.ofList [Sign.Minus; Sign.Plus; Sign.Zero]] //start
+        [Set.ofList [Sign.Zero]] //int x;
+        [Set.ofList [Sign.Minus]] //x := -24+-24;
+        [Set.ofList [Sign.Minus]] //x := -24+0;
+        [Set.ofList [Sign.Minus; Sign.Plus; Sign.Zero]] //x := -24+24;
+        [Set.ofList [Sign.Minus]] //x := 0+-24;
+        [Set.ofList [Sign.Zero]] //x := 0+0;
+        [Set.ofList [Sign.Plus]] //x := 0+24;
+        [Set.ofList [Sign.Minus; Sign.Plus; Sign.Zero]] //x := 24+-24;
+        [Set.ofList [Sign.Plus]] //x := 24+0;
+        [Set.ofList [Sign.Plus]] //x := 24+24;
+        [Set.ofList [Sign.Minus; Sign.Plus; Sign.Zero]] // free x
+    ]
+    
+    let solution = solution |> Map.toList |> List.map (fun (_,v) -> Map.toList v |> List.map (fun (_, v) -> v)) 
+    Assert.That(solution, Is.EqualTo(expected))
+
+[<Test>]
+let signDetectionMinus() =
+    let source = """
+        int x;
+        x := -24--24;
+        x := -24-0;
+        x := -24-24;
+        x := 0--24;
+        x := 0-0;
+        x := 0-24;
+        x := 24--24;
+        x := 24-0;
+        x := 24-24;
+        """
+    let pg = FrontEnd.compile source
+    
+    let x = AmalgamatedLocation.Variable("x:1");
+    
+    let worklist = StackWorklist.empty()
+    
+    let analysis = SignDetectionAnalysis(pg)
+    let (solution,_) = analysis.analyse pg worklist
+    
+    let expected = [
+        [Set.ofList [Sign.Minus; Sign.Plus; Sign.Zero]] //start
+        [Set.ofList [Sign.Zero]] //int x;
+        [Set.ofList [Sign.Minus; Sign.Plus; Sign.Zero]] //x := -24--24;
+        [Set.ofList [Sign.Minus]] //x := -24-0;
+        [Set.ofList [Sign.Minus]] //x := -24-24;
+        [Set.ofList [Sign.Plus]] //x := 0--24;
+        [Set.ofList [Sign.Zero]] //x := 0-0;
+        [Set.ofList [Sign.Minus]] //x := 0-24;
+        [Set.ofList [Sign.Plus]] //x := 24--24;
+        [Set.ofList [Sign.Plus]] //x := 24-0;
+        [Set.ofList [Sign.Plus; Sign.Minus; Sign.Zero]] //x := 24-24;
+        [Set.ofList [Sign.Minus; Sign.Plus; Sign.Zero]] // free x
+    ]
+    
+    let solution = solution |> Map.toList |> List.map (fun (_,v) -> Map.toList v |> List.map (fun (_, v) -> v)) 
+    Assert.That(solution, Is.EqualTo(expected))
+
+[<Test>]
+let signDetectionDivision() =
+    let source = """
+        int x;
+        x := -24/-24;
+        x := -24/0;
+        x := -24/24;
+        x := 0/-24;
+        x := 0/0;
+        x := 0/24;
+        x := 24/-24;
+        x := 24/0;
+        x := 24/24;
+        """
+    let pg = FrontEnd.compile source
+    
+    let x = AmalgamatedLocation.Variable("x:1");
+    
+    let worklist = StackWorklist.empty()
+    
+    let analysis = SignDetectionAnalysis(pg)
+    let (solution,_) = analysis.analyse pg worklist
+    
+    let expected = [
+        [Set.ofList [Sign.Minus; Sign.Plus; Sign.Zero]] //start
+        [Set.ofList [Sign.Zero]] //int x;
+        [Set.ofList [Sign.Plus]] //x := -24/-24;
+        [Set.empty] //x := -24/0;
+        [Set.ofList [Sign.Minus]] //x := -24/24;
+        [Set.ofList [Sign.Zero]] //x := 0/-24;
+        [Set.empty] //x := 0/0;
+        [Set.ofList [Sign.Zero]] //x := 0/24;
+        [Set.ofList [Sign.Minus]] //x := 24/-24;
+        [Set.empty] //x := 24/0;
+        [Set.ofList [Sign.Plus]] //x := 24/24;
+        [Set.ofList [Sign.Minus; Sign.Plus; Sign.Zero]] // free x
+    ]
+    
+    let solution = solution |> Map.toList |> List.map (fun (_,v) -> Map.toList v |> List.map (fun (_, v) -> v)) 
+    Assert.That(solution, Is.EqualTo(expected))
+
+[<Test>]
+let signDetectionMultiply() =
+    let source = """
+        int x;
+        x := -24*-24;
+        x := -24*0;
+        x := -24*24;
+        x := 0*-24;
+        x := 0*0;
+        x := 0*24;
+        x := 24*-24;
+        x := 24*0;
+        x := 24*24;
+        """
+    let pg = FrontEnd.compile source
+    
+    let x = AmalgamatedLocation.Variable("x:1");
+    
+    let worklist = StackWorklist.empty()
+    
+    let analysis = SignDetectionAnalysis(pg)
+    let (solution,_) = analysis.analyse pg worklist
+    
+    let expected = [
+        [Set.ofList [Sign.Minus; Sign.Plus; Sign.Zero]] //start
+        [Set.ofList [Sign.Zero]] //int x;
+        [Set.ofList [Sign.Plus]] //x := -24*-24;
+        [Set.ofList [Sign.Zero]] //x := -24*0;
+        [Set.ofList [Sign.Minus]] //x := -24*24;
+        [Set.ofList [Sign.Zero]] //x := 0*-24;
+        [Set.ofList [Sign.Zero]] //x := 0*0;
+        [Set.ofList [Sign.Zero]] //x := 0*24;
+        [Set.ofList [Sign.Minus]] //x := 24*-24;
+        [Set.ofList [Sign.Zero]] //x := 24*0;
+        [Set.ofList [Sign.Plus]] //x := 24*24;
+        [Set.ofList [Sign.Minus; Sign.Plus; Sign.Zero]] // free x
+    ]
+    
+    let solution = solution |> Map.toList |> List.map (fun (_,v) -> Map.toList v |> List.map (fun (_, v) -> v)) 
+    Assert.That(solution, Is.EqualTo(expected))
+
+[<Test>]
+let signDetectionModulo() =
+    let source = """
+        int x;
+        x := -24%-24;
+        x := -24%0;
+        x := -24%24;
+        x := 0%-24;
+        x := 0%0;
+        x := 0%24;
+        x := 24%-24;
+        x := 24%0;
+        x := 24%24;
+        """
+    let pg = FrontEnd.compile source
+    
+    let x = AmalgamatedLocation.Variable("x:1");
+    
+    let worklist = StackWorklist.empty()
+    
+    let analysis = SignDetectionAnalysis(pg)
+    let (solution,_) = analysis.analyse pg worklist
+    
+    let expected = [
+        [Set.ofList [Sign.Minus; Sign.Plus; Sign.Zero]] //start
+        [Set.ofList [Sign.Zero]] //int x;
+        [Set.ofList [Sign.Zero; Sign.Minus]] //x := -24%-24;
+        [Set.empty] //x := -24%0;
+        [Set.ofList [Sign.Zero; Sign.Plus]] //x := -24%24;
+        [Set.ofList [Sign.Zero]] //x := 0%-24;
+        [Set.empty] //x := 0%0;
+        [Set.ofList [Sign.Zero]] //x := 0%24;
+        [Set.ofList [Sign.Minus; Sign.Zero]] //x := 24%-24;
+        [Set.empty] //x := 24%0;
+        [Set.ofList [Sign.Plus; Sign.Zero]] //x := 24%24;
+        [Set.ofList [Sign.Minus; Sign.Plus; Sign.Zero]] // free x
+    ]
+    
+    let solution = solution |> Map.toList |> List.map (fun (_,v) -> Map.toList v |> List.map (fun (_, v) -> v)) 
+    Assert.That(solution, Is.EqualTo(expected))
+
