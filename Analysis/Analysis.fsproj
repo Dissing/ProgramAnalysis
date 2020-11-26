@@ -15,6 +15,7 @@
         <Compile Include="analyses\DangerousVariables.fs" />
         <Compile Include="analyses\FaintVariables.fs" />
         <Compile Include="analyses\Interval.fs" />
+        <Compile Include="analyses\SignDetection.fs" />
     </ItemGroup>
 
     <ItemGroup>
