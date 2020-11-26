@@ -144,12 +144,12 @@ let intervalLeastUpperBound () =
 
 [<Test>]
 let intervalAddition () =
-    let x = (Val -2, Val 2)
-    let y = (Val 0, Val 1)
-    let z = (NegInf, Val 1)
-    let w = (Val 0, Inf)
-    let q = (NegInf, Inf)
-    let r = (Val 0, Val 0)
+    let x = I(Val -2, Val 2)
+    let y = I(Val 0, Val 1)
+    let z = I(NegInf, Val 1)
+    let w = I(Val 0, Inf)
+    let q = I(NegInf, Inf)
+    let r = I(Val 0, Val 0)
     
     let analysis = IntervalAnalysis((Map.empty, ([],[])), -2, 2)
     
@@ -197,12 +197,12 @@ let intervalAddition () =
 
 [<Test>]
 let intervalSubtraction () =
-    let x = (Val -2, Val 2)
-    let y = (Val 0, Val 1)
-    let z = (NegInf, Val 1)
-    let w = (Val 0, Inf)
-    let q = (NegInf, Inf)
-    let r = (Val 0, Val 0)
+    let x = I(Val -2, Val 2)
+    let y = I(Val 0, Val 1)
+    let z = I(NegInf, Val 1)
+    let w = I(Val 0, Inf)
+    let q = I(NegInf, Inf)
+    let r = I(Val 0, Val 0)
     
     let analysis = IntervalAnalysis((Map.empty, ([],[])), -2, 2)
     
@@ -250,12 +250,12 @@ let intervalSubtraction () =
 
 [<Test>]
 let intervalMultiplication () =
-    let x = (Val -2, Val 2)
-    let y = (Val 0, Val 1)
-    let z = (NegInf, Val 1)
-    let w = (Val 0, Inf)
-    let q = (NegInf, Inf)
-    let r = (Val 0, Val 0)
+    let x = I(Val -2, Val 2)
+    let y = I(Val 0, Val 1)
+    let z = I(NegInf, Val 1)
+    let w = I(Val 0, Inf)
+    let q = I(NegInf, Inf)
+    let r = I(Val 0, Val 0)
     
     let analysis = IntervalAnalysis((Map.empty, ([],[])), -2, 2)
     
@@ -300,3 +300,141 @@ let intervalMultiplication () =
     Assert.That(analysis.multiplication r w, Is.EqualTo(I(Val 0, Val 0)))
     Assert.That(analysis.multiplication r q, Is.EqualTo(I(Val 0, Val 0)))
     Assert.That(analysis.multiplication r r, Is.EqualTo(I(Val 0, Val 0)))
+    
+[<Test>]
+let intervalDivision () =
+    let x = I(Val -2, Val 2)
+    let y = I(Val 0, Val 1)
+    let z = I(NegInf, Val 1)
+    let w = I(Val 0, Inf)
+    let q = I(NegInf, Inf)
+    let r = I(Val 0, Val 0)
+    
+    let analysis = IntervalAnalysis((Map.empty, ([],[])), -2, 2)
+    
+    Assert.That(analysis.division x x, Is.EqualTo(I(Val -2, Val 2)))
+    Assert.That(analysis.division x y, Is.EqualTo(I(Val -2, Val 2)))
+    Assert.That(analysis.division x z, Is.EqualTo(I(Val -2, Val 2)))
+    Assert.That(analysis.division x w, Is.EqualTo(I(Val -2, Val 2)))
+    Assert.That(analysis.division x q, Is.EqualTo(I(Val -2, Val 2)))
+    Assert.That(analysis.division x r, Is.EqualTo(Bot))
+    
+    Assert.That(analysis.division y x, Is.EqualTo(I(Val -1, Val 1)))
+    Assert.That(analysis.division y y, Is.EqualTo(I(Val 0, Val 1)))
+    Assert.That(analysis.division y z, Is.EqualTo(I(Val -1, Val 1)))
+    Assert.That(analysis.division y w, Is.EqualTo(I(Val 0, Val 1)))
+    Assert.That(analysis.division y q, Is.EqualTo(I(Val -1, Val 1)))
+    Assert.That(analysis.division y r, Is.EqualTo(Bot))
+    
+    Assert.That(analysis.division z x, Is.EqualTo(I(NegInf, Inf)))
+    Assert.That(analysis.division z y, Is.EqualTo(I(NegInf, Val 1)))
+    Assert.That(analysis.division z z, Is.EqualTo(I(NegInf, Inf)))
+    Assert.That(analysis.division z w, Is.EqualTo(I(NegInf, Val 1)))
+    Assert.That(analysis.division z q, Is.EqualTo(I(NegInf, Inf)))
+    Assert.That(analysis.division z r, Is.EqualTo(Bot))
+    
+    Assert.That(analysis.division w x, Is.EqualTo(I(NegInf, Inf)))
+    Assert.That(analysis.division w y, Is.EqualTo(I(Val 0, Inf)))
+    Assert.That(analysis.division w z, Is.EqualTo(I(NegInf, Inf)))
+    Assert.That(analysis.division w w, Is.EqualTo(I(Val 0, Inf)))
+    Assert.That(analysis.division w q, Is.EqualTo(I(NegInf, Inf)))
+    Assert.That(analysis.division w r, Is.EqualTo(Bot))
+    
+    Assert.That(analysis.division q x, Is.EqualTo(I(NegInf, Inf)))
+    Assert.That(analysis.division q y, Is.EqualTo(I(NegInf, Inf)))
+    Assert.That(analysis.division q z, Is.EqualTo(I(NegInf, Inf)))
+    Assert.That(analysis.division q w, Is.EqualTo(I(NegInf, Inf)))
+    Assert.That(analysis.division q q, Is.EqualTo(I(NegInf, Inf)))
+    Assert.That(analysis.division q r, Is.EqualTo(Bot))
+    
+    Assert.That(analysis.division r x, Is.EqualTo(I(Val 0, Val 0)))
+    Assert.That(analysis.division r y, Is.EqualTo(I(Val 0, Val 0)))
+    Assert.That(analysis.division r z, Is.EqualTo(I(Val 0, Val 0)))
+    Assert.That(analysis.division r w, Is.EqualTo(I(Val 0, Val 0)))
+    Assert.That(analysis.division r q, Is.EqualTo(I(Val 0, Val 0)))
+    Assert.That(analysis.division r r, Is.EqualTo(Bot))
+    
+[<Test>]
+let intervalModulo () =
+    let x = I(Val -2, Val 2)
+    let y = I(Val 0, Val 1)
+    let z = I(NegInf, Val 1)
+    let w = I(Val 0, Inf)
+    let q = I(NegInf, Inf)
+    let r = I(Val 0, Val 0)
+    let u = I(Val 1, Val 2)
+    let v = I(Val -2, Val -1)
+    
+    let analysis = IntervalAnalysis((Map.empty, ([],[])), -2, 2)
+    
+    Assert.That(analysis.modulo x x, Is.EqualTo(I(Val -1, Val 1)))
+    Assert.That(analysis.modulo x y, Is.EqualTo(I(Val 0, Val 0)))
+    Assert.That(analysis.modulo x z, Is.EqualTo(I(Val -2, Val 2)))
+    Assert.That(analysis.modulo x w, Is.EqualTo(I(Val -2, Val 2)))
+    Assert.That(analysis.modulo x q, Is.EqualTo(I(Val -2, Val 2)))
+    Assert.That(analysis.modulo x r, Is.EqualTo(Bot))
+    Assert.That(analysis.modulo x u, Is.EqualTo(I(Val -1, Val 1)))
+    Assert.That(analysis.modulo x v, Is.EqualTo(I(Val -1, Val 1)))
+    
+    Assert.That(analysis.modulo y x, Is.EqualTo(I(Val 0, Val 1)))
+    Assert.That(analysis.modulo y y, Is.EqualTo(I(Val 0, Val 0)))
+    Assert.That(analysis.modulo y z, Is.EqualTo(I(Val 0, Val 1)))
+    Assert.That(analysis.modulo y w, Is.EqualTo(I(Val 0, Val 1)))
+    Assert.That(analysis.modulo y q, Is.EqualTo(I(Val 0, Val 1)))
+    Assert.That(analysis.modulo y r, Is.EqualTo(Bot))
+    Assert.That(analysis.modulo y u, Is.EqualTo(I(Val 0, Val 1)))
+    Assert.That(analysis.modulo y v, Is.EqualTo(I(Val 0, Val 1)))
+    
+    Assert.That(analysis.modulo z x, Is.EqualTo(I(Val -1, Val 1)))
+    Assert.That(analysis.modulo z y, Is.EqualTo(I(Val 0, Val 0)))
+    Assert.That(analysis.modulo z z, Is.EqualTo(I(NegInf, Val 1)))
+    Assert.That(analysis.modulo z w, Is.EqualTo(I(NegInf, Val 1)))
+    Assert.That(analysis.modulo z q, Is.EqualTo(I(NegInf, Val 1)))
+    Assert.That(analysis.modulo z r, Is.EqualTo(Bot))
+    Assert.That(analysis.modulo z u, Is.EqualTo(I(Val -1, Val 1)))
+    Assert.That(analysis.modulo z v, Is.EqualTo(I(Val -1, Val 1)))
+    
+    Assert.That(analysis.modulo w x, Is.EqualTo(I(Val 0, Val 1)))
+    Assert.That(analysis.modulo w y, Is.EqualTo(I(Val 0, Val 0)))
+    Assert.That(analysis.modulo w z, Is.EqualTo(I(Val 0, Inf)))
+    Assert.That(analysis.modulo w w, Is.EqualTo(I(Val 0, Inf)))
+    Assert.That(analysis.modulo w q, Is.EqualTo(I(Val 0, Inf)))
+    Assert.That(analysis.modulo w r, Is.EqualTo(Bot))
+    Assert.That(analysis.modulo w u, Is.EqualTo(I(Val 0, Val 1)))
+    Assert.That(analysis.modulo w v, Is.EqualTo(I(Val 0, Val 1)))
+    
+    Assert.That(analysis.modulo q x, Is.EqualTo(I(Val -1, Val 1)))
+    Assert.That(analysis.modulo q y, Is.EqualTo(I(Val 0, Val 0)))
+    Assert.That(analysis.modulo q z, Is.EqualTo(I(NegInf, Inf)))
+    Assert.That(analysis.modulo q w, Is.EqualTo(I(NegInf, Inf)))
+    Assert.That(analysis.modulo q q, Is.EqualTo(I(NegInf, Inf)))
+    Assert.That(analysis.modulo q r, Is.EqualTo(Bot))
+    Assert.That(analysis.modulo q u, Is.EqualTo(I(Val -1, Val 1)))
+    Assert.That(analysis.modulo q v, Is.EqualTo(I(Val -1, Val 1)))
+    
+    Assert.That(analysis.modulo r x, Is.EqualTo(I(Val 0, Val 0)))
+    Assert.That(analysis.modulo r y, Is.EqualTo(I(Val 0, Val 0)))
+    Assert.That(analysis.modulo r z, Is.EqualTo(I(Val 0, Val 0)))
+    Assert.That(analysis.modulo r w, Is.EqualTo(I(Val 0, Val 0)))
+    Assert.That(analysis.modulo r q, Is.EqualTo(I(Val 0, Val 0)))
+    Assert.That(analysis.modulo r r, Is.EqualTo(Bot))
+    Assert.That(analysis.modulo r u, Is.EqualTo(I(Val 0, Val 0)))
+    Assert.That(analysis.modulo r v, Is.EqualTo(I(Val 0, Val 0)))
+    
+    Assert.That(analysis.modulo u x, Is.EqualTo(I(Val 0, Val 1)))
+    Assert.That(analysis.modulo u y, Is.EqualTo(I(Val 0, Val 0)))
+    Assert.That(analysis.modulo u z, Is.EqualTo(I(Val 0, Val 2)))
+    Assert.That(analysis.modulo u w, Is.EqualTo(I(Val 0, Val 2)))
+    Assert.That(analysis.modulo u q, Is.EqualTo(I(Val 0, Val 2)))
+    Assert.That(analysis.modulo u r, Is.EqualTo(Bot))
+    Assert.That(analysis.modulo u u, Is.EqualTo(I(Val 0, Val 1)))
+    Assert.That(analysis.modulo u v, Is.EqualTo(I(Val 0, Val 1)))
+    
+    Assert.That(analysis.modulo v x, Is.EqualTo(I(Val -1, Val 0)))
+    Assert.That(analysis.modulo v y, Is.EqualTo(I(Val 0, Val 0)))
+    Assert.That(analysis.modulo v z, Is.EqualTo(I(Val -2, Val 0)))
+    Assert.That(analysis.modulo v w, Is.EqualTo(I(Val -2, Val 0)))
+    Assert.That(analysis.modulo v q, Is.EqualTo(I(Val -2, Val 0)))
+    Assert.That(analysis.modulo v r, Is.EqualTo(Bot))
+    Assert.That(analysis.modulo v u, Is.EqualTo(I(Val -1, Val 0)))
+    Assert.That(analysis.modulo v v, Is.EqualTo(I(Val -1, Val 0)))
