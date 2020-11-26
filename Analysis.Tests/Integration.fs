@@ -33,11 +33,12 @@ write S.std;
 """
 
 let testAnalysis<'L when 'L : comparison> (annotatedGraph: AnnotatedGraph) (analysis: IAnalysis<'L>) =
+    let (_, graph) = annotatedGraph
     let worklists = [
         StackWorklist.empty() :> IWorklist;
         QueueWorklist.empty() :> IWorklist;
-        //StrongComponentsWorklist.empty(graph) :> IWorklist;
-        //NaturalComponentsWorklist.empty(graph) :> IWorklist
+        StrongComponentsWorklist.empty(graph) :> IWorklist;
+        NaturalComponentsWorklist.empty(graph) :> IWorklist
     ]
         
     let solutions = worklists |> List.map (fun w ->
