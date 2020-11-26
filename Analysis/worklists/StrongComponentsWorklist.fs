@@ -2,8 +2,9 @@
 
 open FrontEnd
 
+
 type StrongComponentsWorklist(currentNodes: List<ProgramGraph.Node>, pendingNodes: Set<ProgramGraph.Node>, rpOrdering: ReversePostorder.RPOrder, scRelation : ComponentRelation.ComponentRelation) =
-                  
+    
     static member empty(graph: ProgramGraph.Graph) =
         let (_, rpOrdering) = ReversePostorder.DFST graph
         let components = StrongComponents.StrongComps graph rpOrdering
@@ -11,17 +12,16 @@ type StrongComponentsWorklist(currentNodes: List<ProgramGraph.Node>, pendingNode
         StrongComponentsWorklist([], Set.empty, rpOrdering, relation)
     
     interface Analysis.IWorklist with
-    
         member this.name = "Strong Components"
-        
-        //NOTE: Upcast is for some strange reason not implicit in F#, so we need to explicitly add the
-        //'upcast' keyword in front of the constructor in order to cast the concrete type to the interface type
+
         member this.extract() =
             match currentNodes with
             | q::qs -> Some(q, upcast StrongComponentsWorklist(qs, pendingNodes, rpOrdering, scRelation))
-            | [] -> let (S, pPrime) = scRelation.GetTopNodes pendingNodes
-                    let VrP = rpOrdering.getOrder(S)
-                    Some((VrP.Head), upcast StrongComponentsWorklist(VrP.Tail, pPrime, rpOrdering, scRelation))
+            | [] -> if pendingNodes.IsEmpty
+                    then None
+                    else let (S, pPrime) = scRelation.GetTopNodes pendingNodes
+                         let VrP = rpOrdering.getOrder(S)
+                         Some((VrP.Head), upcast StrongComponentsWorklist(VrP.Tail, pPrime, rpOrdering, scRelation))
             
         member this.insert(q) =
             if List.contains q currentNodes

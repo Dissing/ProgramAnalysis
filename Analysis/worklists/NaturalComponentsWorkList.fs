@@ -17,9 +17,11 @@ type NaturalComponentsWorklist(currentNodes: List<ProgramGraph.Node>, pendingNod
         member this.extract() =
             match currentNodes with
             | q::qs -> Some(q, upcast NaturalComponentsWorklist(qs, pendingNodes, rpOrdering, ncRelation))
-            | [] -> let (S, pPrime) = ncRelation.GetTopNodes pendingNodes
-                    let VrP = rpOrdering.getOrder(S)
-                    Some((VrP.Head), upcast NaturalComponentsWorklist(VrP.Tail, pPrime, rpOrdering, ncRelation))
+            | [] -> if pendingNodes.IsEmpty
+                    then None
+                    else let (S, pPrime) = ncRelation.GetTopNodes pendingNodes
+                         let VrP = rpOrdering.getOrder(S)
+                         Some((VrP.Head), upcast NaturalComponentsWorklist(VrP.Tail, pPrime, rpOrdering, ncRelation))
             
         member this.insert(q) =
             if List.contains q currentNodes
