@@ -95,9 +95,78 @@ type AmalgamatedLocation =
         Seq.map (fun (_,d) -> AmalgamatedLocation.fromDeclaration d) |>
         Seq.fold (fun s x -> Set.union s x) Set.empty
         
-module FreeVariables =
+module Expressions =
     let arithmeticFreeVariables (expr: AST.ArithmeticExpr) = 
         Set.map AmalgamatedLocation.fromLocation (AST.arithmeticFreeVariables expr)
     
     let booleanFreeVariables (expr: AST.BooleanExpr) = 
         Set.map AmalgamatedLocation.fromLocation (AST.booleanFreeVariables expr)
+
+    let rec nonTrivialArithmeticExpressions (expr: AST.ArithmeticExpr) =
+        match expr with
+        | AST.Loc(AST.Array(_, index)) ->
+            nonTrivialArithmeticExpressions index
+        | AST.Loc _ ->
+            Set.empty
+        | AST.IntLiteral _ ->
+            Set.empty
+        | AST.ArithmeticUnary(_, inner) ->
+            Set.union
+                (Set.singleton expr)
+                (nonTrivialArithmeticExpressions inner)
+        | AST.ArithmeticBinary(left, _, right) ->
+            Set.union
+                (Set.singleton expr)
+                (Set.union
+                    (nonTrivialArithmeticExpressions left)
+                    (nonTrivialArithmeticExpressions right))
+
+    let rec nonTrivialArithmeticExpressionsInBoolean (expr: AST.BooleanExpr) =
+        match expr with
+        | AST.BooleanLiteral _ ->
+            Set.empty
+        | AST.BooleanUnary (_, inner) ->
+            nonTrivialArithmeticExpressionsInBoolean inner
+        | AST.BooleanBinary (left, _, right) ->
+            Set.union
+                (nonTrivialArithmeticExpressionsInBoolean left)
+                (nonTrivialArithmeticExpressionsInBoolean right)
+        | AST.Comparison (left, _, right) ->
+            Set.union
+                (nonTrivialArithmeticExpressions left)
+                (nonTrivialArithmeticExpressions right)
+
+    let allArithmeticExpressionsInAction (action: Action) =
+        match action with
+        | Allocate(_) | Free(_) ->
+            Set.empty
+        | Assign((AST.Array(_, index)), expr) ->
+            Set.union
+                (nonTrivialArithmeticExpressions index)
+                (nonTrivialArithmeticExpressions expr)
+        | Assign(_, expr) ->
+            nonTrivialArithmeticExpressions expr
+        | AssignLiteral(_, exprs) ->
+            exprs |> List.fold (fun s (_, expr) ->
+                Set.union s (nonTrivialArithmeticExpressions expr)) Set.empty
+        | Condition(expr) ->
+            nonTrivialArithmeticExpressionsInBoolean expr
+        | Read(AST.Array(_, index)) ->
+            nonTrivialArithmeticExpressions index
+        | Read(_) ->
+            Set.empty
+        | Write(expr) ->
+            nonTrivialArithmeticExpressions expr
+            
+    let allArithmeticExpressionsInGraph (graph: AnnotatedGraph) =
+        let (_, (_, edges)) = graph
+        edges |> List.fold (fun s (_, action, _) ->
+            Set.union s (allArithmeticExpressionsInAction action)) Set.empty
+        
+    let expressionsContainingLocation (exprs: Set<AST.ArithmeticExpr>) (location: AmalgamatedLocation) =
+        exprs |> Set.filter (fun expr ->
+            (arithmeticFreeVariables expr).Contains location)
+        
+    let expressionsNotContainingLocation (exprs: Set<AST.ArithmeticExpr>) (location: AmalgamatedLocation) =
+            exprs |> Set.filter (fun expr ->
+                not ((arithmeticFreeVariables expr).Contains location))

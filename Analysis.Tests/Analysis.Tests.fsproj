@@ -24,6 +24,8 @@
       <Compile Include="Interval.fs" />
       <Compile Include="SignDetection.fs" />
       <Compile Include="Integration.fs" />
+      <Compile Include="VeryBusyExpressions.fs" />
+      <Compile Include="AvailableExpressions.fs" />
     </ItemGroup>
 
     <ItemGroup>
