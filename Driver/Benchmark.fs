@@ -15,8 +15,8 @@
         let worklists: List<IWorklist> = [
             StackWorklist.empty();
             QueueWorklist.empty();
-            //StrongComponentsWorklist.empty(pg);
-            //NaturalComponentsWorklist.empty(pg);
+            StrongComponentsWorklist.empty(pg);
+            NaturalComponentsWorklist.empty(pg);
         ]
         let (nodes, edges) = pg
         let results = [
