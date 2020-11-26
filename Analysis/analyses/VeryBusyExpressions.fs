@@ -5,20 +5,20 @@ open Analysis.Expressions
 open FrontEnd
 open FrontEnd.ProgramGraph
 
-type AE = AST.ArithmeticExpr
+type VBE = AST.ArithmeticExpr
 
-type AvailableExpressionsAnalysis(graph: AnnotatedGraph) =
-    inherit IBitVector<AE>()
+type VeryBusyExpressionsAnalysis(graph: AnnotatedGraph) =
+    inherit IBitVector<VBE>()
     
     let allExpressions = allArithmeticExpressionsInGraph graph
     
-    override this.name = "Available Expressions"
+    override this.name = "Very Busy Expressions"
         
-        override this.isReverseAnalysis() = false
+        override this.isReverseAnalysis() = true
         
-        override this.lessThanOrEqual (x: Set<AE>) (y: Set<AE>) = Set.isSuperset x y
+        override this.lessThanOrEqual (x: Set<VBE>) (y: Set<VBE>) = Set.isSuperset x y
         
-        override this.leastUpperBound (x: Set<AE>) (y: Set<AE>) = Set.intersect x y
+        override this.leastUpperBound (x: Set<VBE>) (y: Set<VBE>) = Set.intersect x y
         
         override this.leastElement() = allExpressions
         
@@ -26,41 +26,38 @@ type AvailableExpressionsAnalysis(graph: AnnotatedGraph) =
         
         override this.killAndGen((_, action, _): Edge) =
             match action with
-            | Allocate(_) ->
+            | Allocate(decl) ->
+                let kill = Set.fold (fun s loc ->
+                    Set.union s
+                        (expressionsContainingLocation allExpressions loc)) Set.empty (AmalgamatedLocation.fromDeclaration decl)
+                let gen = Set.empty
+                (kill, gen)
+            | Free(_) ->
                 (Set.empty, Set.empty)
-            | Free(d) ->
-                let locations = AmalgamatedLocation.fromDeclaration d
-                let kill =
-                    locations |> Set.fold (fun s location ->
-                        Set.union s (expressionsContainingLocation allExpressions location)) Set.empty
-                (kill, Set.empty)
             | Assign((AST.Array(x,index), expr)) ->
-                let loc = Array x
-                let kill = expressionsContainingLocation allExpressions loc
+                let kill = Set.empty
                 let indexExprs = nonTrivialArithmeticExpressions index
                 let assignExprs = nonTrivialArithmeticExpressions expr
-                let gen = expressionsNotContainingLocation (Set.union indexExprs assignExprs) loc
+                let gen = (Set.union indexExprs assignExprs)
                 (kill, gen)
             | Assign(x, expr) ->
                 let loc = AmalgamatedLocation.fromLocation x
                 let kill = expressionsContainingLocation allExpressions loc
-                let assignExprs = nonTrivialArithmeticExpressions expr
-                let gen = expressionsNotContainingLocation assignExprs loc
+                let gen = nonTrivialArithmeticExpressions expr
                 (kill, gen)
             | AssignLiteral(s, exprs) ->
                 List.fold (fun (kill, gen) (field, expr) ->
                     let loc = Field(s, field)
                     let addKill = expressionsContainingLocation allExpressions loc
-                    let assignExprs = nonTrivialArithmeticExpressions expr
-                    let addGen = expressionsNotContainingLocation assignExprs loc
+                    let addGen = nonTrivialArithmeticExpressions expr
                     (Set.union kill addKill, Set.union gen addGen)
                 ) (Set.empty, Set.empty) exprs
             | Condition(expr) ->
                 let kill = Set.empty
                 let gen = nonTrivialArithmeticExpressionsInBoolean expr
                 (kill, gen)
-            | Read(AST.Array(x, index)) ->
-                let kill = expressionsContainingLocation allExpressions (Array x)
+            | Read(AST.Array(_, index)) ->
+                let kill = Set.empty
                 let gen = nonTrivialArithmeticExpressions index
                 (kill, gen)
             | Read(x) ->
