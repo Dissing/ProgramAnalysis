@@ -10,11 +10,11 @@ while (S.size > i) {
     {
         S.max := ele;
     }
-    S.var := S.var + ele*ele;
+    S.std := S.std + ele*ele;
     i := i + 1;
 }
-S.var := (S.var - (S.average*S.average)/S.size)/(S.size-1);
+S.std := (S.std - (S.average*S.average)/S.size)/(S.size-1);
 S.average := S.average/S.size;
 write S.average;
 write S.max;
-write S.var;
+write S.std;

@@ -91,7 +91,12 @@ type IntervalAnalysis(graph: AnnotatedGraph, minInt: int, maxInt: int) =
     override this.leastElement() =
         locations |> Set.toSeq |> Seq.map (fun loc -> (loc, Bot)) |> Map.ofSeq
         
-    override this.initialElement ((annotation, _): AnnotatedGraph) = failwith "Not yet implemented"
+    override this.initialElement ((annotation, _): AnnotatedGraph) =
+        annotation |> Map.toSeq |>
+            Seq.fold (fun s1 (_,v) ->
+                Set.fold (fun s2 l ->
+                    s2.Add(l,(I(NegInf, Inf)))) s1 (AmalgamatedLocation.fromDeclaration(v))) Map.empty
+        
     
     member this.addition (left: Interval) (right: Interval) =
         match (left, right) with

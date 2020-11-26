@@ -23,6 +23,7 @@
       <Compile Include="StackWorklist.fs" />
       <Compile Include="Interval.fs" />
       <Compile Include="SignDetection.fs" />
+      <Compile Include="Integration.fs" />
     </ItemGroup>
 
     <ItemGroup>
