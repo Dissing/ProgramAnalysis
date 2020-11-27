@@ -15,6 +15,7 @@
         let worklists: List<IWorklist> = [
             StackWorklist.empty();
             QueueWorklist.empty();
+            RoundRobinWorklist.empty(pg);
             StrongComponentsWorklist.empty(pg);
             NaturalComponentsWorklist.empty(pg);
         ]
