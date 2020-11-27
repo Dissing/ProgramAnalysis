@@ -44,17 +44,6 @@ module Main =
         printfn "Hello World from F#!"
         
         (*
-        let nodes = [ 0; 1; 2; 3; 4; 5;]
-        let edges = [ (0, ProgramGraph.Action.Condition(AST.Comparison(AST.Loc(AST.Identifier "x"), AST.GreaterEqual, AST.IntLiteral 0)), 1)
-                      (1, ProgramGraph.Action.Condition(AST.Comparison(AST.Loc(AST.Identifier "x"), AST.Greater, AST.IntLiteral 0)), 2)
-                      (2, ProgramGraph.Action.Assign(AST.Identifier "x", AST.ArithmeticBinary((AST.Loc(AST.Identifier "x")), AST.Subtract, (AST.IntLiteral 1))), 1)
-                      (1, ProgramGraph.Action.Condition(AST.BooleanUnary(AST.Not, AST.Comparison(AST.Loc(AST.Identifier "x"), AST.Greater, AST.IntLiteral 0))), 5)
-                      
-                      (0, ProgramGraph.Action.Condition(AST.BooleanUnary(AST.Not, AST.Comparison(AST.Loc(AST.Identifier "x"), AST.GreaterEqual, AST.IntLiteral 0))), 3)
-                      (3, ProgramGraph.Action.Condition(AST.Comparison(AST.Loc(AST.Identifier "x"), AST.Lesser, AST.IntLiteral 0)), 4)
-                      (4, ProgramGraph.Action.Assign(AST.Identifier "x", AST.ArithmeticBinary((AST.Loc(AST.Identifier "x")), AST.Add, (AST.IntLiteral 1))), 3)
-                      (3, ProgramGraph.Action.Condition(AST.BooleanUnary(AST.Not, AST.Comparison(AST.Loc(AST.Identifier "x"), AST.Lesser, AST.IntLiteral 0))), 5) ]
-        *)
         let nodes = [0; 1; 2; 3; 4; 5; 6; 7; 8; 9; 10; 11; 12]
         let edges = [
             (0, ProgramGraph.Action.Read(Identifier "x"), 1)
@@ -100,8 +89,9 @@ module Main =
         let (ncTopNodes, ncRemainder) = nc_cr.GetTopNodes topNodesSet
         printfn "Natural Top: %A" ncTopNodes
         printfn "Natural Remainder: %A" ncRemainder
+        *)
         
-        (*
+        
         let opts =
                 []
                 |> addFlag "b" "benchmark" "run the benchmarking suite"
@@ -149,5 +139,5 @@ module Main =
                 Benchmark.perform graph
             else
                 analysisPipeline config graph
-        *)            
+               
         0 // return an integer exit code
