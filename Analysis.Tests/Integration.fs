@@ -37,6 +37,7 @@ let testAnalysis<'L when 'L : comparison> (annotatedGraph: AnnotatedGraph) (anal
     let worklists = [
         StackWorklist.empty() :> IWorklist;
         QueueWorklist.empty() :> IWorklist;
+        RoundRobinWorklist.empty(graph) :> IWorklist;
         StrongComponentsWorklist.empty(graph) :> IWorklist;
         NaturalComponentsWorklist.empty(graph) :> IWorklist
     ]
