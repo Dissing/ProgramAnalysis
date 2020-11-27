@@ -4,7 +4,6 @@ open Analysis
 open Analysis.Analyses
 open Analysis.Worklists
 open FrontEnd
-open FrontEnd.AST
 open NUnit.Framework
 
 

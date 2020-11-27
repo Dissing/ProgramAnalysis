@@ -3,7 +3,6 @@
 open System.IO;
 open Driver
 open FrontEnd
-open FrontEnd.AST
 
 module Main =
     
@@ -42,55 +41,6 @@ module Main =
     [<EntryPoint>]
     let main args =
         printfn "Hello World from F#!"
-        
-        (*
-        let nodes = [0; 1; 2; 3; 4; 5; 6; 7; 8; 9; 10; 11; 12]
-        let edges = [
-            (0, ProgramGraph.Action.Read(Identifier "x"), 1)
-            (1, ProgramGraph.Action.Condition(Comparison(Loc(Identifier "x"), GreaterEqual, IntLiteral 0)), 2)
-            (2, ProgramGraph.Action.Assign(Identifier "i", IntLiteral 0), 3)
-            (3, ProgramGraph.Action.Assign(Identifier "y", IntLiteral -1), 4)
-            (4, ProgramGraph.Action.Condition(Comparison(Loc(Identifier "i"), Lesser, Loc(Identifier "n"))), 6)
-            (4, ProgramGraph.Action.Condition(BooleanUnary(Not, Comparison(Loc(Identifier "i"), Lesser, Loc(Identifier "n")))), 5)
-            (6, ProgramGraph.Action.Condition(Comparison(Loc(Array ("A", Loc(Identifier "i"))), NotEqual, Loc(Identifier "x"))), 10)
-            (10, ProgramGraph.Action.Assign(Identifier "i", ArithmeticBinary((Loc(Identifier "i")), Add, IntLiteral 1)), 4)
-            (6, ProgramGraph.Action.Condition(BooleanUnary(Not, Comparison(Loc(Array ("A", Loc(Identifier "i"))), NotEqual, Loc(Identifier "x")))), 7)
-            (7, ProgramGraph.Action.Assign(Array ("B", Loc(Identifier "i")), ArithmeticBinary(Loc(Array ("B", Loc(Identifier "i"))), Add, ArithmeticBinary(Loc(Array ("B", Loc(Identifier "i"))), ArithmeticBinaryOperator.Divide, IntLiteral 10))), 8)
-            (8, ProgramGraph.Action.Assign(Identifier "i", ArithmeticBinary((Loc(Identifier "y")), Add, Loc(Array ("A", Loc(Identifier "i"))))), 9)
-            (9, ProgramGraph.Action.Skip, 5)
-            (5, ProgramGraph.Action.Write (Loc(Array ("A", Loc(Identifier "i")))), 11)
-            (11, ProgramGraph.Action.Read(Identifier "x"), 1)
-            (1, ProgramGraph.Action.Condition(BooleanUnary(Not, Comparison(Loc(Identifier "x"), GreaterEqual, IntLiteral 0))), 12)
-        ]
-        
-        let topNodesSet = Set.empty.Add(0).Add(1).Add(2).Add(3).Add(4).Add(5).Add(6).Add(7).Add(8).Add(9).Add(10).Add(11).Add(12)
-        let graph = (nodes, edges)
-        let (tree, rpOrder) = ReversePostorder.DFST graph
-        //printfn "%A" tree
-        rpOrder.print()
-        
-        let scList = StrongComponents.StrongComps graph rpOrder
-        printfn "Strong Components: %A" scList
-        
-        let sc_cr = ComponentRelation.ComponentRelation (scList, graph)
-        printfn "Strong Relation: %A" (sc_cr.GetRelation())
-        
-        let (scTopNodes, scRemainder) = sc_cr.GetTopNodes topNodesSet
-        printfn "Strong Top: %A" scTopNodes
-        printfn "Strong Remainder: %A" scRemainder
-        
-        
-        let ncList = NaturalLoops.NaturalLoops graph rpOrder
-        printfn "Natural Components: %A" ncList
-        
-        let nc_cr = ComponentRelation.ComponentRelation (ncList, graph)
-        printfn "Natural Relation: %A" (nc_cr.GetRelation())
-        
-        let (ncTopNodes, ncRemainder) = nc_cr.GetTopNodes topNodesSet
-        printfn "Natural Top: %A" ncTopNodes
-        printfn "Natural Remainder: %A" ncRemainder
-        *)
-        
         
         let opts =
                 []
@@ -139,5 +89,5 @@ module Main =
                 Benchmark.perform graph
             else
                 analysisPipeline config graph
-               
+
         0 // return an integer exit code

@@ -9,11 +9,16 @@
         <Compile Include="worklists\StackWorklist.fs" />
         <Compile Include="worklists\QueueWorklist.fs" />
         <Compile Include="worklists\StrongComponentsWorklist.fs" />
+        <Compile Include="worklists\RoundRobinWorklist.fs" />
         <Compile Include="worklists\NaturalComponentsWorkList.fs" />
         <Compile Include="analyses\ReachingDefinitions.fs" />
         <Compile Include="analyses\LiveVariables.fs" />
+        <Compile Include="analyses\AvailableExpressions.fs" />
+        <Compile Include="analyses\VeryBusyExpressions.fs" />
         <Compile Include="analyses\DangerousVariables.fs" />
         <Compile Include="analyses\FaintVariables.fs" />
+        <Compile Include="analyses\Interval.fs" />
+        <Compile Include="analyses\SignDetection.fs" />
     </ItemGroup>
 
     <ItemGroup>
