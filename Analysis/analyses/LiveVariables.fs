@@ -24,7 +24,7 @@ type LiveVariablesAnalysis() =
     
     override this.killAndGen((_, action, _): Edge) =
         match action with
-        | Allocate(AST.Integer name) ->
+        | Allocate(AST.VarDecl name) ->
             let kill = Set.singleton (Variable name)
             let gen = Set.empty
             (kill, gen)
@@ -32,12 +32,12 @@ type LiveVariablesAnalysis() =
             let kill = Set.singleton (Array name)
             let gen = Set.empty
             (kill, gen)
-        | Allocate(AST.Struct(name, fields)) ->
+        | Allocate(AST.RecordDecl(name, fields)) ->
             let kill = List.map (fun field -> Field(name,field)) fields |> Set.ofList
             let gen = Set.empty
             (kill, gen)
         | Free(_) -> (Set.empty, Set.empty)
-        | Assign((AST.Array(x,index), expr)) ->
+        | Assign(AST.Array(x,index), expr) ->
             let kill = Set.empty
             let gen = Set.union (arithmeticFreeVariables index) (arithmeticFreeVariables expr)
             (kill, gen)

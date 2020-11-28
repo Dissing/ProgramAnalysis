@@ -18,7 +18,7 @@ let PrinterBool () =
     
 [<Test>]
 let PrinterArith () =
-    let statement = (ArithmeticBinary (ArithmeticBinary (ArithmeticUnary(Negative, Loc (Identifier "Var")), Subtract, (ArithmeticUnary(Negative, Loc (Field ("R", "fst"))))), Divide, (IntLiteral 10)))
+    let statement = (ArithmeticBinary (ArithmeticBinary (ArithmeticUnary(Negative, Loc (Variable "Var")), Subtract, (ArithmeticUnary(Negative, Loc (Field ("R", "fst"))))), Divide, (IntLiteral 10)))
 
     let expectedRes = "((-Var) - (-R.fst)) / 10"
     let (res, _) = FrontEnd.Printer.ArithmeticPrinter "" statement
@@ -27,7 +27,7 @@ let PrinterArith () =
     
 [<Test>]
 let PrinterBoolArith () =
-    let statement = (Comparison (ArithmeticBinary (ArithmeticUnary(Negative, Loc (Identifier "Var")), Subtract, (ArithmeticUnary(Negative, Loc (Field ("R", "fst"))))), GreaterEqual, (IntLiteral 10)))
+    let statement = (Comparison (ArithmeticBinary (ArithmeticUnary(Negative, Loc (Variable "Var")), Subtract, (ArithmeticUnary(Negative, Loc (Field ("R", "fst"))))), GreaterEqual, (IntLiteral 10)))
 
     let expectedRes = "((-Var) - (-R.fst)) >= 10"
     let (res, _) = FrontEnd.Printer.BooleanPrinter "" statement

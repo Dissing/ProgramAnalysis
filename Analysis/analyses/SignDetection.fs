@@ -3,7 +3,6 @@ namespace Analysis.Analyses
 open System.Net
 open Analysis
 open FrontEnd
-open FrontEnd.AST
 open FrontEnd.ProgramGraph
 
 type Sign =
@@ -91,7 +90,7 @@ type SignDetectionAnalysis(graph: AnnotatedGraph) =
         | AST.Loc l ->
                      let x = (AmalgamatedLocation.fromLocation l)
                      match l with
-                     | Array (_, arrExpr) ->
+                     | AST.Array (_, arrExpr) ->
                                         let arrSigns = determineArithmeticSigns map arrExpr
                                         if Set.isEmpty (Set.intersect arrSigns (Set.ofList [Sign.Plus; Sign.Zero])) then
                                             Set.empty
@@ -123,25 +122,25 @@ type SignDetectionAnalysis(graph: AnnotatedGraph) =
         locations |> Set.toSeq |> Seq.map (fun loc -> (loc, Set.ofList [Sign.Zero; Sign.Minus; Sign.Plus])) |> Map.ofSeq
     override this.analyseEdge ((_, action, _): Edge) (labeling: DS) =
         match action with
-        | Allocate(AST.Integer name) ->
+        | Allocate(AST.VarDecl name) ->
             let x = Variable(name)
             labeling.Add(x, (Set.ofList [Sign.Zero]))
         | Allocate(AST.ArrayDecl (i, _)) -> 
             let x = AmalgamatedLocation.Array(i)
             labeling.Add(x, (Set.ofList [Sign.Zero]))
-        | Allocate(AST.Struct (name, fields)) -> 
+        | Allocate(AST.RecordDecl (name, fields)) -> 
             let x = List.map (fun field -> AmalgamatedLocation.Field(name,field)) fields 
             updateMap x labeling (Set.ofList [Sign.Zero])
-        | Free(AST.Integer name) ->
+        | Free(AST.VarDecl name) ->
             let x = Variable(name)
             labeling.Add(x, (Set.ofList [Sign.Zero; Sign.Minus; Sign.Plus]))
         | Free(AST.ArrayDecl (i, _)) -> 
             let x = AmalgamatedLocation.Array(i)
             labeling.Add(x, (Set.ofList [Sign.Zero; Sign.Minus; Sign.Plus]))
-        | Free(AST.Struct (name, fields)) -> 
+        | Free(AST.RecordDecl (name, fields)) -> 
             let x = List.map (fun field -> AmalgamatedLocation.Field(name,field)) fields 
             updateMap x labeling (Set.ofList [Sign.Zero; Sign.Plus; Sign.Minus])
-        | Assign((AST.Array(arr,indexExpr), expr)) ->
+        | Assign(AST.Array(arr,indexExpr), expr) ->
             let x = AmalgamatedLocation.Array arr
             let index = determineArithmeticSigns labeling indexExpr
             if Set.isEmpty (Set.intersect index (Set.ofList [Sign.Plus; Sign.Zero])) then
@@ -152,7 +151,7 @@ type SignDetectionAnalysis(graph: AnnotatedGraph) =
                     labeling.Add(x, Set.empty)
                 else
                     labeling.Add(x, (Set.union labeling.[x] (determineArithmeticSigns labeling expr))) 
-        | Assign((var, expr)) ->
+        | Assign(var, expr) ->
             let x = AmalgamatedLocation.fromLocation var
             labeling.Add(x, (determineArithmeticSigns labeling expr))
         | AssignLiteral(s, exprs) ->

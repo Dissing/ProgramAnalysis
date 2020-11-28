@@ -25,9 +25,8 @@ let assignVar () =
     let source = "int X; X:=5;"
     
     let graph = FrontEnd.compile source
-    let (_, (_, edges)) = graph
     
-    let analysis = ReachingDefinitionsAnalysis(edges)
+    let analysis = ReachingDefinitionsAnalysis(graph)
     let worklist = StackWorklist.empty()
     let sol = analysis.analyse graph worklist |> extractSolution
     Assert.That(sol.Length, Is.EqualTo 4)
@@ -42,9 +41,8 @@ let assignArray () =
     let source = "int[2] X; X[1]:=5;"
     
     let graph = FrontEnd.compile source
-    let (_, (_, edges)) = graph
     
-    let analysis = ReachingDefinitionsAnalysis(edges)
+    let analysis = ReachingDefinitionsAnalysis(graph)
     let worklist = StackWorklist.empty()
     let sol = analysis.analyse graph worklist |> extractSolution
     Assert.That(sol.Length, Is.EqualTo 4)
@@ -60,9 +58,8 @@ let assignStruct () =
     let source = "{int foo; int bar} S; S.foo:=5;"
     
     let graph = FrontEnd.compile source
-    let (_, (_, edges)) = graph
     
-    let analysis = ReachingDefinitionsAnalysis(edges)
+    let analysis = ReachingDefinitionsAnalysis(graph)
     let worklist = StackWorklist.empty()
     let sol = analysis.analyse graph worklist |> extractSolution
     Assert.That(sol.Length, Is.EqualTo 4)
@@ -79,9 +76,8 @@ let assignFullStruct () =
     let source = "{int foo; int bar} S; S:={5,2};"
     
     let graph = FrontEnd.compile source
-    let (_, (_, edges)) = graph
     
-    let analysis = ReachingDefinitionsAnalysis(edges)
+    let analysis = ReachingDefinitionsAnalysis(graph)
     let worklist = StackWorklist.empty()
     let sol = analysis.analyse graph worklist |> extractSolution
     Assert.That(sol.Length, Is.EqualTo 4)
@@ -99,9 +95,8 @@ let readNormal() =
     let source = "int x; read x;"
     
     let graph = FrontEnd.compile source
-    let (_, (_, edges)) = graph
     
-    let analysis = ReachingDefinitionsAnalysis(edges)
+    let analysis = ReachingDefinitionsAnalysis(graph)
     let worklist = StackWorklist.empty()
     let sol = analysis.analyse graph worklist |> extractSolution
     Assert.That(sol.Length, Is.EqualTo 4)
@@ -116,9 +111,8 @@ let readArray() =
     let source = "int[2] x; read x[0];"
     
     let graph = FrontEnd.compile source
-    let (_, (_, edges)) = graph
     
-    let analysis = ReachingDefinitionsAnalysis(edges)
+    let analysis = ReachingDefinitionsAnalysis(graph)
     let worklist = StackWorklist.empty()
     let sol = analysis.analyse graph worklist |> extractSolution
     
@@ -135,9 +129,8 @@ let readStruct() =
     let source = "{int foo; int bar} S; read S.foo;"
     
     let graph = FrontEnd.compile source
-    let (_, (_, edges)) = graph
     
-    let analysis = ReachingDefinitionsAnalysis(edges)
+    let analysis = ReachingDefinitionsAnalysis(graph)
     let worklist = StackWorklist.empty()
     let sol = analysis.analyse graph worklist |> extractSolution
     Assert.That(sol.Length, Is.EqualTo 4)
@@ -153,9 +146,8 @@ let write() =
     let source = "int x; {int foo; int bar} S; write 5; write x; write S.foo;"
     
     let graph = FrontEnd.compile source
-    let (_, (_, edges)) = graph
     
-    let analysis = ReachingDefinitionsAnalysis(edges)
+    let analysis = ReachingDefinitionsAnalysis(graph)
     let worklist = StackWorklist.empty()
     let sol = analysis.analyse graph worklist |> extractSolution
     Assert.That(sol.Length, Is.EqualTo 8)
@@ -176,9 +168,8 @@ let conditionIf() =
     let source = "int x; if(x > 0) {x:=5;}"
     
     let graph = FrontEnd.compile source
-    let (_, (_, edges)) = graph
     
-    let analysis = ReachingDefinitionsAnalysis(edges)
+    let analysis = ReachingDefinitionsAnalysis(graph)
     let worklist = StackWorklist.empty()
     let sol = analysis.analyse graph worklist |> extractSolution
     Assert.That(sol.Length, Is.EqualTo 5)
@@ -193,9 +184,8 @@ let conditionIfElse() =
     let source = "int x; int y; if(x > 0) {x:=5;} else{y:=2;}"
     
     let graph = FrontEnd.compile source
-    let (_, (_, edges)) = graph
     
-    let analysis = ReachingDefinitionsAnalysis(edges)
+    let analysis = ReachingDefinitionsAnalysis(graph)
     let worklist = StackWorklist.empty()
     let sol = analysis.analyse graph worklist |> extractSolution
     Assert.That(sol.Length, Is.EqualTo 8)
@@ -214,9 +204,8 @@ let conditionWhile() =
     let source = "int x; while(x > 0) {x:=x-1;}"
     
     let graph = FrontEnd.compile source
-    let (_, (_, edges)) = graph
     
-    let analysis = ReachingDefinitionsAnalysis(edges)
+    let analysis = ReachingDefinitionsAnalysis(graph)
     let worklist = StackWorklist.empty()
     let sol = analysis.analyse graph worklist |> extractSolution
     Assert.That(sol.Length, Is.EqualTo 5)

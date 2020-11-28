@@ -278,12 +278,12 @@ type IntervalAnalysis(graph: AnnotatedGraph, minInt: int, maxInt: int) =
         | Free(x) ->
             AmalgamatedLocation.fromDeclaration x |>
                 Set.fold (fun s l -> s.Add (l, I(NegInf, Inf))) labeling
-        | Assign((AST.Array(x,_), expr)) ->
+        | Assign(AST.Array(x,_), expr) ->
             let l = AmalgamatedLocation.Array x
             let assignedInterval = this.arithmetic labeling expr
             let leastUpperBound = labeling.[l].leastUpperBound(assignedInterval)
             labeling.Add(l, leastUpperBound)
-        | Assign((x, expr)) ->
+        | Assign(x, expr) ->
             let l = AmalgamatedLocation.fromLocation x
             labeling.Add(l, this.arithmetic labeling expr)
         | AssignLiteral(strct, exprs) ->

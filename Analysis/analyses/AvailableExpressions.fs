@@ -34,7 +34,7 @@ type AvailableExpressionsAnalysis(graph: AnnotatedGraph) =
                     locations |> Set.fold (fun s location ->
                         Set.union s (expressionsContainingLocation allExpressions location)) Set.empty
                 (kill, Set.empty)
-            | Assign((AST.Array(x,index), expr)) ->
+            | Assign(AST.Array(x,index), expr) ->
                 let loc = Array x
                 let kill = expressionsContainingLocation allExpressions loc
                 let indexExprs = nonTrivialArithmeticExpressions index
