@@ -40,6 +40,8 @@ module Main =
     
     [<EntryPoint>]
     let main args =
+        printfn "Hello World from F#!"
+        
         let opts =
                 []
                 |> addFlag "b" "benchmark" "run the benchmarking suite"
@@ -87,5 +89,5 @@ module Main =
                 Benchmark.perform graph
             else
                 analysisPipeline config graph
-                    
+
         0 // return an integer exit code

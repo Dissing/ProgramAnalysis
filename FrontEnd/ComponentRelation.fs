@@ -4,8 +4,7 @@ open FrontEnd.ProgramGraph
 
 module ComponentRelation =
     
-    type ComponentRelation(components : (Node Set) List, pg : Graph) =
-    
+    type ComponentRelation(components : (Node Set) List, pg : Graph) =       
         let (nodes, edges) = pg
         
         let rec GetComponentIdxFromNode (node : Node) (components : (Node Set) List) (idx : int) =
@@ -36,18 +35,9 @@ module ComponentRelation =
                                                                   if (idx1 <> idx2) && not (rel.Contains(idx2, idx1)) then rel.Add(idx1, idx2) else rel
                        ) relation edges
         
-        let reducedComponents =
-            List.foldBack (fun curComponent componentList ->
-                               (List.fold (fun curComp realComponent ->
-                                               if Set.isSuperset curComp realComponent && curComp <> realComponent
-                                               then Set.difference curComp realComponent
-                                               else curComp
-                               ) curComponent components)::componentList
-                          ) components []
-        
         let rec CollectToNodes (idx : int) (compRelation : (int * int) Set) =
             Set.fold (fun toNodes (idxFrom, idxTo) -> if idx = idxFrom
-                                                      then Set.union toNodes (reducedComponents.Item(idxTo))
+                                                      then Set.union toNodes (components.Item(idxTo))
                                                       else toNodes
             ) Set.empty compRelation
 
@@ -57,7 +47,8 @@ module ComponentRelation =
         
         member this.GetTopNodes (pendingNodes : Node Set) =
             let topNodes = Set.fold (fun (top : Node Set) node -> let idx = NodeToComponentIdx.Item(node)
-                                                                  Set.difference top (CollectToNodes idx componentRelation)
+                                                                  //printfn "%d removes %A" node (CollectToNodes idx componentRelation)
+                                                                  Set.difference top (Set.difference (CollectToNodes idx componentRelation) (components.Item(idx)))
                            ) pendingNodes pendingNodes
             let remainder = Set.difference pendingNodes topNodes
             (topNodes, remainder)
