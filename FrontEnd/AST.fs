@@ -4,7 +4,7 @@ module AST =
     type Ident = string
      
     type ArithmeticUnaryOperator =
-        | Negation
+        | Negative
          
     type BooleanUnaryOperator =
         | Not

@@ -15,7 +15,6 @@ module ProgramGraph =
         | Condition of BooleanExpr
         | Read of Location
         | Write of ArithmeticExpr
-        | Skip
        
     type Node = int
     type Edge = Node * Action * Node

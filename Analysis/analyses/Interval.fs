@@ -255,7 +255,7 @@ type IntervalAnalysis(graph: AnnotatedGraph, minInt: int, maxInt: int) =
                 I(maxBound, Inf)
             else
                 I(Val n, Val n)
-        | AST.ArithmeticUnary(AST.Negation, inner) ->
+        | AST.ArithmeticUnary(AST.Negative, inner) ->
             match this.arithmetic labeling inner with
             | Bot -> Bot
             | I(z1, z2) -> this.multiplication (I(Val -1, Val -1)) (I(z1,z2))

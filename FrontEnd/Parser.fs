@@ -218,7 +218,7 @@ module Parser =
                 let (ctx, inner) =
                     parseArithmeticExpr' (tail ctx) prefixPrecedence
 
-                (ctx, ArithmeticUnary(ArithmeticUnaryOperator.Negation, inner))
+                (ctx, ArithmeticUnary(ArithmeticUnaryOperator.Negative, inner))
             | LEFT_PAREN ->
                 let (ctx, inner) = parseArithmeticExpr (tail ctx)
                 (expect RIGHT_PAREN ctx, inner)

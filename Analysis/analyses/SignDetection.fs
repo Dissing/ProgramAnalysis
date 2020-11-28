@@ -54,7 +54,6 @@ type SignDetectionAnalysis(graph: AnnotatedGraph) =
                             | (_, Sign.Zero) -> Set.empty
                             | (x, Sign.Plus) -> Set.ofList [x; Sign.Zero]
                             | (x,Sign.Minus) -> Set.ofList [negateSign x; Sign.Zero]
-                            | _ -> Set.empty // Never happens
                             
     let moduloSign pair = match pair with
                             | (_, Sign.Zero)  -> Set.empty
@@ -104,7 +103,7 @@ type SignDetectionAnalysis(graph: AnnotatedGraph) =
                               | i when i < 0  -> Set.empty.Add(Sign.Minus)
                               | _ -> Set.empty.Add(Sign.Plus)
         | AST.ArithmeticUnary (unary, expr) -> match unary with
-                                               | AST.Negation -> Set.fold (fun acc ele -> acc.Add(negateSign ele)) Set.empty (determineArithmeticSigns map expr)
+                                               | AST.Negative -> Set.fold (fun acc ele -> acc.Add(negateSign ele)) Set.empty (determineArithmeticSigns map expr)
         | AST.ArithmeticBinary (expr1, opr, expr2) -> handleOpr opr (determineArithmeticSigns map expr1) (determineArithmeticSigns map expr2)
      
     override this.name = "Sign Detection"

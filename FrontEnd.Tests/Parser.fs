@@ -30,7 +30,7 @@ let parseArithmetic2 () =
     let ast = Lexer.lex source.Content >>= Parser.parse
     
     let e1 = ArithmeticBinary (Loc (Identifier "c"), Add, Loc (Identifier "d"))
-    let e2 = ArithmeticUnary  (Negation, Loc (Identifier "b"))
+    let e2 = ArithmeticUnary  (Negative, Loc (Identifier "b"))
     let e3 = ArithmeticBinary (e2, Multiply, e1)
     let e4 = ArithmeticBinary (Loc (Identifier "a"), Add, e3)
     
@@ -44,7 +44,7 @@ let parseArithmetic3 () =
     let source = SourceFile("parseArithmetic.c", "z := -1+x*2/(13-A[0]);")
     let ast = Lexer.lex source.Content >>= Parser.parse
     
-    let e1 = ArithmeticUnary (Negation, (IntLiteral 1))
+    let e1 = ArithmeticUnary (Negative, (IntLiteral 1))
     let e2 = ArithmeticBinary ((Loc (Identifier "x")), Multiply, (IntLiteral 2))
     let e3 = ArithmeticBinary ((IntLiteral 13), Subtract, (Loc (Array ("A", IntLiteral 0))))
     let e4 = ArithmeticBinary (e2, Divide, e3)
