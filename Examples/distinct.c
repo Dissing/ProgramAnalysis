@@ -3,6 +3,7 @@ int i;
 int j;
 int t;
 int n;
+int distinct;
 
 n := 42;
 i := 1;
@@ -16,3 +17,12 @@ while (i < n) {
   }
   i := i+1;
 }
+
+distinct := 0;
+i := 0;
+while (i < n - 1) {
+  if (A[i] != A[i+1]) {
+    distinct := distinct + 1;
+  }
+}
+write distinct;
