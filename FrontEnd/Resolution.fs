@@ -78,7 +78,11 @@ module Resolution =
                 match lookup stack strct with
                 | Some (VarDecl _) -> return! Error(sprintf "Tried accessing field %s on integer %s" field strct, span)
                 | Some (ArrayDecl _) -> return! Error(sprintf "Tried accessing field %s on array %s" field strct, span)
-                | Some (RecordDecl (name, fields)) -> return ((stack, fresh), Field(name, field))
+                | Some (RecordDecl (name, fields)) ->
+                    if List.contains field fields then
+                        return ((stack, fresh), Field(name, field))
+                    else
+                        return! Error(sprintf "Tried accessing field %s but record %s has no such field" field strct, span)
                 | None -> return! Error(sprintf "Used of undeclared struct %s" strct, span)
             }
 
