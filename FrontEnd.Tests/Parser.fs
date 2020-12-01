@@ -94,7 +94,7 @@ let parseWhile () =
     
 [<Test>]
 let parseAndOr () =
-    let source = SourceFile("parseBoolean.c", "if (true || false && !(true || false)) { x := 0; }")
+    let source = SourceFile("parseBoolean.c", "if (true || false && not (true || false)) { x := 0; }")
     let tokens = Lexer.lex source.Content
     printfn "%A" tokens
     let ast = tokens >>= Parser.parse

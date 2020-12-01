@@ -94,6 +94,7 @@ module Lexer =
                 | "read" -> READ
                 | "write" -> WRITE
                 | "int" -> INT
+                | "not" -> NOT
                 | other -> IDENTIFIER(other)
 
             return ((kind, span) :: tokens, consumedLexeme)
@@ -133,7 +134,7 @@ module Lexer =
                     | ',' -> lexSingle COMMA tokens s
                     | '<' -> lexConditionalDouble '=' LESSER_EQUAL LESSER tokens s
                     | '>' -> lexConditionalDouble '=' GREATER_EQUAL GREATER tokens s
-                    | '!' -> lexConditionalDouble '=' NOT_EQUAL NOT tokens s
+                    | '!' -> lexDouble '=' NOT_EQUAL tokens s
                     | ':' -> lexDouble '=' ASSIGN tokens s
                     | '|' -> lexDouble '|' OR tokens s
                     | '&' -> lexDouble '&' AND tokens s
