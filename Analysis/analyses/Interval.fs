@@ -178,23 +178,25 @@ type IntervalAnalysis(graph: AnnotatedGraph, minInt: int, maxInt: int) =
         match (left, right) with
         | (Bot, _) | (_, Bot) -> Bot
         | (I(_,_),I(z21,z22)) when z21 = Val 0 && z22 = Val 0 -> Bot
-        | (I(z11,z12),I(z21,z22)) -> 
-            let inv1 =
-                match z21 with
-                | NegInf | Inf -> Val 0
-                | Val x when x = 0 -> Inf
-                | Val x -> Val (1 / x)
-            let inv2 =
+        | (I(z11,z12),I(z21,z22)) ->
+            let zmin =
                 match z22 with
-                | NegInf | Inf -> Val 0
+                | Inf -> Val 0
+                | Val x when x = 0 -> NegInf
+                | Val x -> Val (1 / x)
+                | NegInf -> failwith "Negative infinity upper bound!"
+            let zmax =
+                match z21 with
+                | NegInf -> Val 0
                 | Val x when x = 0 -> Inf
                 | Val x -> Val (1 / x)
+                | Inf -> failwith "Positive infinity lower bound!"
             if (z21.lessThanOrEqual(Val -1) && z22.lessThanOrEqual(Val -1)) || (z21.greaterThanOrEqual(Val 1) && z22.greaterThanOrEqual(Val 1))
-            then this.multiplication (I(z11, z12)) (I(inv2, inv1))
+            then this.multiplication (I(z11, z12)) (I(zmin, zmax))
             elif z21 = Val 0
-            then this.multiplication (I(z11, z12)) (I(inv2, Val 1))
+            then this.multiplication (I(z11, z12)) (I(zmin, Val 1))
             elif z22 = Val 0
-            then this.multiplication (I(z11, z12)) (I(Val -1, inv1))
+            then this.multiplication (I(z11, z12)) (I(Val -1, zmax))
             else this.multiplication (I(z11, z12)) (I(Val -1, Val 1))
             
     
