@@ -20,20 +20,20 @@ type NaturalComponentsWorklist(currentNodes: List<ProgramGraph.Node>, pendingNod
             | [] -> if pendingNodes.IsEmpty
                     then None
                     else let (S, pPrime) = ncRelation.GetTopNodes pendingNodes
-                         (*
-                         (ncRelation.GetRelation() |> Seq.iter (printf "%A "))
-                         printfn ""
-                         printfn "S:"
-                         (S |> Seq.iter (printf "%d "))
-                         printfn ""
-                         printfn "P:"
-                         (pPrime |> Seq.iter (printf "%d "))
-                         printfn ""
-                         printfn "PendingNodes:"
-                         (pendingNodes |> Seq.iter (printf "%d "))
-                         printfn ""
-                         printfn ""
-                         *)
+                         
+                         //(ncRelation.GetRelation() |> Seq.iter (printf "%A "))
+                         //printfn ""
+                         //printfn "S:"
+                         //(S |> Seq.iter (printf "%d "))
+                         //printfn ""
+                         //printfn "P:"
+                         //(pPrime |> Seq.iter (printf "%d "))
+                         //printfn ""
+                         //printfn "PendingNodes:"
+                         //(pendingNodes |> Seq.iter (printf "%d "))
+                         //printfn ""
+                         //printfn ""
+                         
                          let VrP = rpOrdering.sortNodes(S)
                          Some((VrP.Head), upcast NaturalComponentsWorklist(VrP.Tail, pPrime, rpOrdering, ncRelation))
             
