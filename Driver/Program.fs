@@ -1,4 +1,4 @@
-﻿namespace Driver
+namespace Driver
 
 open System.IO;
 open Driver

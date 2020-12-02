@@ -1,4 +1,4 @@
-﻿namespace Analysis.Analyses
+namespace Analysis.Analyses
 open Analysis
 open Analysis.Analyses
 open FrontEnd
