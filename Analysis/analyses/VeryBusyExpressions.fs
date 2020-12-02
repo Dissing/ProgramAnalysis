@@ -1,4 +1,4 @@
-﻿namespace Analysis.Analyses
+namespace Analysis.Analyses
 
 open Analysis
 open Analysis.Expressions
@@ -34,7 +34,7 @@ type VeryBusyExpressionsAnalysis(graph: AnnotatedGraph) =
                 (kill, gen)
             | Free(_) ->
                 (Set.empty, Set.empty)
-            | Assign((AST.Array(x,index), expr)) ->
+            | Assign(AST.Array(x,index), expr) ->
                 let kill = Set.empty
                 let indexExprs = nonTrivialArithmeticExpressions index
                 let assignExprs = nonTrivialArithmeticExpressions expr

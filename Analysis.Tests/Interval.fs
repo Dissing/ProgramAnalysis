@@ -4,7 +4,6 @@ open Analysis
 open Analysis.Analyses
 open Analysis.Worklists
 open FrontEnd
-open FrontEnd.AST
 open NUnit.Framework
 open NUnit.Framework
 
@@ -438,3 +437,162 @@ let intervalModulo () =
     Assert.That(analysis.modulo v r, Is.EqualTo(Bot))
     Assert.That(analysis.modulo v u, Is.EqualTo(I(Val -1, Val 0)))
     Assert.That(analysis.modulo v v, Is.EqualTo(I(Val -1, Val 0)))
+
+[<Test>]
+let intervalDivisionByZero () =
+    let source = """
+        int x;
+        int y;
+        x := 2;
+        y := 0;
+        if (true) {
+          x := x / y;
+          write x;
+        } else {
+          x := y / x;
+        }
+        """
+    let graph = FrontEnd.compile source
+    let worklist = StackWorklist.empty()
+    let analysis = IntervalAnalysis(graph, -2, 2)
+    let (solution,_) = analysis.analyse graph worklist
+    
+    let x = Variable "x:1"
+    let y = Variable "y:2"
+    
+    let expected = [
+        [(x, I(NegInf, Inf)); (y, I(NegInf, Inf))]; //0: Initial
+        [(x, I(Val 0, Val 0)); (y, I(NegInf, Inf))]; //1: int x;
+        [(x, I(Val 0, Val 0)); (y, I(Val 0, Val 0))]; //2: int y;
+        [(x, I(Val 2, Val 2)); (y, I(Val 0, Val 0))]; //3: x := 2
+        [(x, I(Val 2, Val 2)); (y, I(Val 0, Val 0))]; //4: y := 0
+        [(x, I(Val 2, Val 2)); (y, I(Val 0, Val 0))]; //5: true
+        []; //6: x := x / y
+        [(x, I(Val 0, Val 0)); (y, I(Val 0, Val 0))]; //7: x := y / x and write x
+        [(x, I(Val 2, Val 2)); (y, I(Val 0, Val 0))]; //8: !true
+        [(x, I(Val 0, Val 0)); (y, I(NegInf, Inf))]; //free y;
+        [(x, I(NegInf, Inf)); (y, I(NegInf, Inf))]; //free x;
+    ]
+    
+    
+    let solution = solution |> Map.toList |> List.map (fun (_,v) -> Map.toList v)
+    Assert.That(solution, Is.EqualTo(expected))
+
+[<Test>]
+let intervalAccessArrayOutOfBounds () =
+    let source = """
+        int x;
+        int[1] A;
+        read x;
+        write A[x];
+        write A[2];
+        """
+    let graph = FrontEnd.compile source
+    let worklist = StackWorklist.empty()
+    let analysis = IntervalAnalysis(graph, -2, 2)
+    let (solution,_) = analysis.analyse graph worklist
+    
+    let x = Variable "x:1"
+    let a = Array "A:2"
+    
+    let expected = [
+        [(x, I(NegInf, Inf)); (a, I(NegInf, Inf))]; //0: Initial
+        [(x, I(Val 0, Val 0)); (a, I(NegInf, Inf))]; //1: int x;
+        [(x, I(Val 0, Val 0)); (a, I(Val 0, Val 0))]; //2: int[1] A;
+        [(x, I(NegInf, Inf)); (a, I(Val 0, Val 0))]; //3: read x;
+        [(x, I(NegInf, Inf)); (a, I(Val 0, Val 0))]; //4: write A[x];
+        []; //5: write A[2];
+        []; //6: free A;
+        []; //7: free x;
+    ]
+    
+    let solution = solution |> Map.toList |> List.map (fun (_,v) -> Map.toList v)
+    Assert.That(solution, Is.EqualTo(expected))
+
+[<Test>]
+let intervalReadArrayOutOfBounds () =
+    let source = """
+        int x;
+        int[1] A;
+        read x;
+        read A[x];
+        read A[2];
+        """
+    let graph = FrontEnd.compile source
+    let worklist = StackWorklist.empty()
+    let analysis = IntervalAnalysis(graph, -2, 2)
+    let (solution,_) = analysis.analyse graph worklist
+    
+    let x = Variable "x:1"
+    let a = Array "A:2"
+    
+    let expected = [
+        [(x, I(NegInf, Inf)); (a, I(NegInf, Inf))]; //0: Initial
+        [(x, I(Val 0, Val 0)); (a, I(NegInf, Inf))]; //1: int x;
+        [(x, I(Val 0, Val 0)); (a, I(Val 0, Val 0))]; //2: int[1] A;
+        [(x, I(NegInf, Inf)); (a, I(Val 0, Val 0))]; //3: read x;
+        [(x, I(NegInf, Inf)); (a, I(NegInf, Inf))]; //4: read A[x];
+        []; //5: read A[2];
+        []; //6: free A;
+        []; //7: free x;
+    ]
+    
+    let solution = solution |> Map.toList |> List.map (fun (_,v) -> Map.toList v)
+    Assert.That(solution, Is.EqualTo(expected))
+    
+[<Test>]
+let intervalAssignArrayOutOfBounds () =
+    let source = """
+        int x;
+        int[1] A;
+        read x;
+        A[x] := 2;
+        A[2] := 2;
+        """
+    let graph = FrontEnd.compile source
+    let worklist = StackWorklist.empty()
+    let analysis = IntervalAnalysis(graph, -2, 2)
+    let (solution,_) = analysis.analyse graph worklist
+    
+    let x = Variable "x:1"
+    let a = Array "A:2"
+    
+    let expected = [
+        [(x, I(NegInf, Inf)); (a, I(NegInf, Inf))]; //0: Initial
+        [(x, I(Val 0, Val 0)); (a, I(NegInf, Inf))]; //1: int x;
+        [(x, I(Val 0, Val 0)); (a, I(Val 0, Val 0))]; //2: int[1] A;
+        [(x, I(NegInf, Inf)); (a, I(Val 0, Val 0))]; //3: read x;
+        [(x, I(NegInf, Inf)); (a, I(Val 0, Val 2))]; //4: read A[x];
+        []; //5: read A[2];
+        []; //6: free A;
+        []; //7: free x;
+    ]
+    
+    let solution = solution |> Map.toList |> List.map (fun (_,v) -> Map.toList v)
+    Assert.That(solution, Is.EqualTo(expected))
+
+[<Test>]
+let intervalAssignRecord () =
+    let source = """
+        {int x; int y} R;
+        R := {1,3};
+        R := {R.x,R.y/0};
+        """
+    let graph = FrontEnd.compile source
+    let worklist = StackWorklist.empty()
+    let analysis = IntervalAnalysis(graph, -2, 2)
+    let (solution,_) = analysis.analyse graph worklist
+    
+    let x = Field ("R:1","x")
+    let y = Field ("R:1","y")
+    
+    let expected = [
+        [(x, I(NegInf, Inf)); (y, I(NegInf, Inf))]; //0: Initial
+        [(x, I(Val 0, Val 0)); (y, I(Val 0, Val 0))]; //1: {int x; int y} R;
+        [(x, I(Val 1, Val 1)); (y, I(Val 2, Inf))]; //2: R := {1,3};
+        []; //3: R := {R.x, R.y/0};
+        []; //4: free A;
+    ]
+    
+    let solution = solution |> Map.toList |> List.map (fun (_,v) -> Map.toList v)
+    Assert.That(solution, Is.EqualTo(expected))

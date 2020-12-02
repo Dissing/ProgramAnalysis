@@ -1,4 +1,4 @@
-﻿namespace Driver
+namespace Driver
 
 open System.IO;
 open Driver
@@ -35,16 +35,11 @@ module Main =
         | Error(msg, _) -> failwith msg
         
         
-    let analysisPipeline config (graph: ProgramGraph.AnnotatedGraph) =
-        failwith "Not yet implemented"
-    
     [<EntryPoint>]
     let main args =
-        printfn "Hello World from F#!"
         
         let opts =
                 []
-                |> addFlag "b" "benchmark" "run the benchmarking suite"
                 |> addFlag "h" "help" "print this help menu"
                 |> addOpt "o" "" "set output file name" "NAME"
                 |> addOpt "a" "analysis" "dump the result of a specific analysis: [reaching; live]" "ANALYSIS"
@@ -61,7 +56,6 @@ module Main =
             | o::os ->
                 let config =
                     match o.Name with
-                    | "b" -> { config with Benchmark = true }
                     | "h" -> { config with PrintUsage = true }
                     | "o" -> { config with OutputFile = o.Arg }
                     | "a" -> { config with AnalysisTarget = Some(parseAnalysisTarget o.Arg) }
@@ -85,9 +79,6 @@ module Main =
             let content = File.ReadAllText(path)
             let file = SourceFile(path, content)
             let graph = frontendPipeline config file
-            if config.Benchmark then
-                Benchmark.perform graph
-            else
-                analysisPipeline config graph
+            Benchmark.perform graph
 
         0 // return an integer exit code

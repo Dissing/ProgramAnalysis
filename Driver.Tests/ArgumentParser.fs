@@ -1,4 +1,4 @@
-module Driver.Tests
+module Driver.Tests.ArgumentParser
 
 open NUnit.Framework
 open Driver.ArgumentParser

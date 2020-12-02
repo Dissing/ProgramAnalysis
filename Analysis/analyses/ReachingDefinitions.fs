@@ -8,8 +8,10 @@ open FrontEnd.ProgramGraph
 
 type RD = AmalgamatedLocation * Option<Node> * Node
 
-type ReachingDefinitionsAnalysis(edges: List<Edge>) =
+type ReachingDefinitionsAnalysis(graph: AnnotatedGraph) =
     inherit IBitVector<RD>()
+    
+    let (_, (_, edges)) = graph
     
     override this.name = "Reaching Definitions"
     
@@ -32,7 +34,7 @@ type ReachingDefinitionsAnalysis(edges: List<Edge>) =
 
     override this.killAndGen((src, action, dst): Edge) =
         match action with
-        | Allocate(AST.Integer name) ->
+        | Allocate(AST.VarDecl name) ->
             let kill = Set.empty
             let gen = Set.singleton (Variable name, None, dst)
             (kill, gen)
@@ -40,11 +42,11 @@ type ReachingDefinitionsAnalysis(edges: List<Edge>) =
             let kill = Set.empty
             let gen = Set.singleton (Array name, None, dst)
             (kill, gen)
-        | Allocate(AST.Struct(name, fields)) ->
+        | Allocate(AST.RecordDecl(name, fields)) ->
             let kill = Set.empty
             let gen = List.map (fun field -> (Field(name,field), None, dst)) fields |> Set.ofList
             (kill, gen)
-        | Free(AST.Integer name) ->
+        | Free(AST.VarDecl name) ->
             let kill = this.exhaustiveKill (Variable name)
             let gen = Set.empty
             (kill, gen)
@@ -52,11 +54,11 @@ type ReachingDefinitionsAnalysis(edges: List<Edge>) =
             let kill = this.exhaustiveKill (Array name)
             let gen = Set.empty
             (kill, gen)
-        | Free(AST.Struct(name, fields)) ->
+        | Free(AST.RecordDecl(name, fields)) ->
             let kill = List.map (fun field -> this.exhaustiveKill (Field(name, field))) fields |> List.reduce Set.union
             let gen = Set.empty
             (kill, gen)
-        | Assign((AST.Array(x,_), _)) ->
+        | Assign(AST.Array(x,_), _) ->
             let kill = Set.empty
             let gen = Set.singleton (Array x, Some(src), dst)
             (kill, gen)

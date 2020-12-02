@@ -21,7 +21,7 @@ let lexReadWrite () =
     
 [<Test>]
 let lexPunctuation () =
-    let code = "([{}]).!();"
+    let code = "([{}]).not();"
     let expected = Ok(List.toArray [
       (LEFT_PAREN, {From = 0; To = 0});
       (LEFT_SQUARE, {From = 1; To = 1});
@@ -30,11 +30,11 @@ let lexPunctuation () =
       (RIGHT_SQUARE, {From = 4; To = 4});
       (RIGHT_PAREN, {From = 5; To = 5});
       (DOT, {From = 6; To = 6});
-      (NOT, {From = 7; To = 7});
-      (LEFT_PAREN, {From = 8; To = 8});
-      (RIGHT_PAREN, {From = 9; To = 9});
-      (SEMI_COLON, {From = 10; To = 10});
-      (EOF, {From = 11; To = 11});
+      (NOT, {From = 7; To = 9});
+      (LEFT_PAREN, {From = 10; To = 10});
+      (RIGHT_PAREN, {From = 11; To = 11});
+      (SEMI_COLON, {From = 12; To = 12});
+      (EOF, {From = 13; To = 13});
     ])
     let tokens = Lexer.lex code
     Assert.That(context.map(tokens, List.toArray), Is.EqualTo(expected))

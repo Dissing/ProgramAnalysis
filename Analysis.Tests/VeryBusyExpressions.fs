@@ -30,9 +30,9 @@ let busyExpressions1 () =
     let nb = "b:2"
     let nx = "x:3"
     
-    let a = Loc (Identifier na)
-    let b = Loc (Identifier nb)
-    let x = Loc (Identifier nx)
+    let a = Loc (Variable na)
+    let b = Loc (Variable nb)
+    let x = Loc (Variable nx)
     
     let worklist = StackWorklist.empty()
     
@@ -74,9 +74,9 @@ let busyExpressions2 () =
     let ni = "i:2"
     let nj = "j:3"
     
-    let A = Loc (Identifier nA)
-    let i = Loc (Identifier ni)
-    let j = Loc (Identifier nj)
+    let A = Loc (Variable nA)
+    let i = Loc (Variable ni)
+    let j = Loc (Variable nj)
     
     let worklist = StackWorklist.empty()
     

@@ -1,4 +1,4 @@
-﻿namespace Driver
+namespace Driver
 
 type Stage =
     | Lexing
@@ -15,7 +15,6 @@ type Config = {
     EarlyStageStop: Stage option
     AnalysisTarget: AnalysisType option
     PrintUsage: bool
-    Benchmark: bool
 }
 with
     static member Default = {
@@ -23,6 +22,5 @@ with
         EarlyStageStop = None
         AnalysisTarget = None
         PrintUsage = false
-        Benchmark = false
     }
 

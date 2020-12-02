@@ -19,6 +19,7 @@
         <Compile Include="EdgesFunction.fs" />
         <Compile Include="Printer.fs" />
         <Compile Include="Resolution.fs" />
+        <Compile Include="Library.fs" />
     </ItemGroup>
 
     <ItemGroup>

@@ -1,4 +1,4 @@
-﻿namespace Analysis.Analyses
+namespace Analysis.Analyses
 
 open Analysis
 open Analysis.Expressions
@@ -26,13 +26,13 @@ type DangerousVariableAnalysis() =
     override this.analyseEdge ((_, action, _): Edge) (labeling: DV) =
         match action with
         | Allocate(_) | Free(_) -> labeling
-        | Assign((AST.Array(x,index), expr)) ->
+        | Assign(AST.Array(x,index), expr) ->
             let fv = Set.union (arithmeticFreeVariables index) (arithmeticFreeVariables expr)
             if (Set.intersect fv labeling).IsEmpty then
                 labeling
             else
                 labeling.Add(Array(x))
-        | Assign((x, expr)) ->
+        | Assign(x, expr) ->
             let fv = arithmeticFreeVariables expr
             if (Set.intersect fv labeling).IsEmpty then
                 labeling.Remove(AmalgamatedLocation.fromLocation x)
@@ -50,7 +50,7 @@ type DangerousVariableAnalysis() =
                     ) (Set.empty, Set.empty) exprs
             Set.union (Set.difference labeling kill) gen
         | Condition(_) -> labeling
-        | Read(AST.Identifier(x)) -> labeling.Remove (Variable x)
+        | Read(AST.Variable(x)) -> labeling.Remove (Variable x)
         | Read(AST.Array(x, _)) -> labeling
         | Read(AST.Field(s, f)) -> labeling.Remove (Field(s,f))
         | Write(_) -> labeling

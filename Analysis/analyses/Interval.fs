@@ -1,4 +1,4 @@
-﻿namespace Analysis.Analyses
+namespace Analysis.Analyses
 open Analysis
 open Analysis.Analyses
 open FrontEnd
@@ -52,6 +52,17 @@ type Interval =
         | (Bot, y) -> y
         | (x, Bot) -> x
         | (I(xl,xu), I(yl,yu)) -> I(xl.least(yl), xu.greatest(yu))
+    
+    member this.intersection (other: Interval) =
+        match (this, other) with
+        | (I(xl,xu), I(yl,yu)) ->
+            let zmin = xl.greatest(yl)
+            let zmax = xu.least(yu)
+            if zmin.lessThanOrEqual(zmax) then
+                I(zmin, zmax)
+            else
+                Bot
+        | _ -> Bot
 
 type IA = Map<AmalgamatedLocation, Interval>
 
@@ -65,6 +76,16 @@ type IntervalAnalysis(graph: AnnotatedGraph, minInt: int, maxInt: int) =
         let (annotation, _) = graph
         annotation |> Map.toSeq |> Seq.fold (fun s (k,v) -> Set.union s (AmalgamatedLocation.fromDeclaration v)) Set.empty |> Set.ofSeq
         
+    let arrayBounds =
+        let (annotation, _) = graph
+        annotation |> Map.fold (fun (s: Map<string, Interval>) _ v ->
+            match v with
+            | AST.ArrayDecl(name, size) ->
+                let zmin = Val(0).greatest(minBound)
+                let zmax = Val(size-1).least(maxBound)
+                s.Add(name, I(zmin, zmax))
+            | _ -> s) Map.empty
+ 
     let minOfBounds a b =
         match (a,b) with
         | (NegInf, _) | (_, NegInf) -> NegInf
@@ -82,14 +103,26 @@ type IntervalAnalysis(graph: AnnotatedGraph, minInt: int, maxInt: int) =
     override this.isReverseAnalysis () = false
         
     override this.lessThanOrEqual (x: IA) (y: IA) =
-        locations |> Set.forall (fun loc ->
-            x.[loc].lessThanOrEqual(y.[loc]))
+        if (Map.isEmpty x) && (Map.isEmpty y) then
+            true
+        elif Map.isEmpty x then
+            true
+        elif Map.isEmpty y then
+            false
+        else
+            locations |> Set.forall (fun loc ->
+                x.[loc].lessThanOrEqual(y.[loc]))
     
     override this.leastUpperBound (x: IA) (y: IA) =
-        locations |> Set.toSeq |> Seq.map (fun loc -> (loc, x.[loc].leastUpperBound(y.[loc]))) |> Map.ofSeq
+        if Map.isEmpty x then
+            y
+        elif Map.isEmpty y then
+            x
+        else
+            locations |> Set.toSeq |> Seq.map (fun loc -> (loc, x.[loc].leastUpperBound(y.[loc]))) |> Map.ofSeq
         
     override this.leastElement() =
-        locations |> Set.toSeq |> Seq.map (fun loc -> (loc, Bot)) |> Map.ofSeq
+        Map.empty
         
     override this.initialElement ((annotation, _): AnnotatedGraph) =
         annotation |> Map.toSeq |>
@@ -178,23 +211,25 @@ type IntervalAnalysis(graph: AnnotatedGraph, minInt: int, maxInt: int) =
         match (left, right) with
         | (Bot, _) | (_, Bot) -> Bot
         | (I(_,_),I(z21,z22)) when z21 = Val 0 && z22 = Val 0 -> Bot
-        | (I(z11,z12),I(z21,z22)) -> 
-            let inv1 =
-                match z21 with
-                | NegInf | Inf -> Val 0
-                | Val x when x = 0 -> Inf
-                | Val x -> Val (1 / x)
-            let inv2 =
+        | (I(z11,z12),I(z21,z22)) ->
+            let zmin =
                 match z22 with
-                | NegInf | Inf -> Val 0
+                | Inf -> Val 0
+                | Val x when x = 0 -> NegInf
+                | Val x -> Val (1 / x)
+                | NegInf -> failwith "Negative infinity upper bound!"
+            let zmax =
+                match z21 with
+                | NegInf -> Val 0
                 | Val x when x = 0 -> Inf
                 | Val x -> Val (1 / x)
+                | Inf -> failwith "Positive infinity lower bound!"
             if (z21.lessThanOrEqual(Val -1) && z22.lessThanOrEqual(Val -1)) || (z21.greaterThanOrEqual(Val 1) && z22.greaterThanOrEqual(Val 1))
-            then this.multiplication (I(z11, z12)) (I(inv2, inv1))
+            then this.multiplication (I(z11, z12)) (I(zmin, zmax))
             elif z21 = Val 0
-            then this.multiplication (I(z11, z12)) (I(inv2, Val 1))
+            then this.multiplication (I(z11, z12)) (I(zmin, Val 1))
             elif z22 = Val 0
-            then this.multiplication (I(z11, z12)) (I(Val -1, inv1))
+            then this.multiplication (I(z11, z12)) (I(Val -1, zmax))
             else this.multiplication (I(z11, z12)) (I(Val -1, Val 1))
             
     
@@ -246,6 +281,14 @@ type IntervalAnalysis(graph: AnnotatedGraph, minInt: int, maxInt: int) =
             I(z1,z2)
     
     member this.arithmetic (labeling: IA) = function
+        | AST.Loc(AST.Array(x, index)) ->
+            let boundsInterval = arrayBounds.[x]
+            let indexInterval = this.arithmetic labeling index
+            let overlapInterval = boundsInterval.intersection(indexInterval)
+            if overlapInterval = Bot then
+                Bot
+            else
+                labeling.[Array x]
         | AST.Loc(loc) ->
             labeling.[AmalgamatedLocation.fromLocation loc]
         | AST.IntLiteral(n) ->
@@ -255,7 +298,7 @@ type IntervalAnalysis(graph: AnnotatedGraph, minInt: int, maxInt: int) =
                 I(maxBound, Inf)
             else
                 I(Val n, Val n)
-        | AST.ArithmeticUnary(AST.Negation, inner) ->
+        | AST.ArithmeticUnary(AST.Negative, inner) ->
             match this.arithmetic labeling inner with
             | Bot -> Bot
             | I(z1, z2) -> this.multiplication (I(Val -1, Val -1)) (I(z1,z2))
@@ -271,26 +314,62 @@ type IntervalAnalysis(graph: AnnotatedGraph, minInt: int, maxInt: int) =
             | AST.Modulo -> this.modulo l r
         
     override this.analyseEdge ((_, action, _): Edge) (labeling: IA) =
-        match action with
-        | Allocate(x) ->
-            AmalgamatedLocation.fromDeclaration x |>
-                Set.fold (fun s l -> s.Add (l, I(Val 0, Val 0))) labeling
-        | Free(x) ->
-            AmalgamatedLocation.fromDeclaration x |>
-                Set.fold (fun s l -> s.Add (l, I(NegInf, Inf))) labeling
-        | Assign((AST.Array(x,_), expr)) ->
-            let l = AmalgamatedLocation.Array x
-            let assignedInterval = this.arithmetic labeling expr
-            let leastUpperBound = labeling.[l].leastUpperBound(assignedInterval)
-            labeling.Add(l, leastUpperBound)
-        | Assign((x, expr)) ->
-            let l = AmalgamatedLocation.fromLocation x
-            labeling.Add(l, this.arithmetic labeling expr)
-        | AssignLiteral(strct, exprs) ->
-            exprs |> List.fold
-                (fun s (field, expr) -> s.Add(AmalgamatedLocation.Field(strct,field), this.arithmetic labeling expr)) labeling
-        | Condition(_) -> labeling
-        | Read(x) -> 
-            let l = AmalgamatedLocation.fromLocation x
-            labeling.Add(l, I(NegInf, Inf))
-        | Write(_) -> labeling
+        if Map.isEmpty labeling then
+            Map.empty
+        else
+            match action with
+            | Allocate(x) ->
+                AmalgamatedLocation.fromDeclaration x |>
+                    Set.fold (fun s l -> s.Add (l, I(Val 0, Val 0))) labeling
+            | Free(x) ->
+                AmalgamatedLocation.fromDeclaration x |>
+                    Set.fold (fun s l -> s.Add (l, I(NegInf, Inf))) labeling
+            | Assign(AST.Array(x,index), expr) ->
+                let l = AmalgamatedLocation.Array x
+                let boundsInterval = arrayBounds.[x]
+                let indexInterval = this.arithmetic labeling index
+                let overlapInterval = boundsInterval.intersection(indexInterval)
+                let assignedInterval = this.arithmetic labeling expr
+                if assignedInterval = Bot || overlapInterval = Bot then
+                    Map.empty
+                else
+                    let leastUpperBound = labeling.[l].leastUpperBound(assignedInterval)
+                    labeling.Add(l, leastUpperBound)
+            | Assign(x, expr) ->
+                let l = AmalgamatedLocation.fromLocation x
+                let assignedInterval = this.arithmetic labeling expr
+                if assignedInterval = Bot then
+                    Map.empty
+                else
+                    labeling.Add(l, this.arithmetic labeling expr)
+            | AssignLiteral(strct, exprs) ->
+                exprs |> List.fold
+                    (fun s (field, expr) ->
+                    if Map.isEmpty s then
+                        Map.empty
+                    else
+                        let assignedInterval = this.arithmetic labeling expr
+                        if assignedInterval = Bot then
+                            Map.empty
+                        else
+                            s.Add(AmalgamatedLocation.Field(strct,field), assignedInterval)) labeling
+            | Condition(_) -> labeling
+            | Read(AST.Array(x, index)) ->
+                let l = Array x
+                let boundsInterval = arrayBounds.[x]
+                let indexInterval = this.arithmetic labeling index
+                let overlapInterval = boundsInterval.intersection(indexInterval)
+                if overlapInterval = Bot then
+                    Map.empty
+                else
+                    labeling.Add(l, I(NegInf, Inf))
+            | Read(x) -> 
+                let l = AmalgamatedLocation.fromLocation x
+                labeling.Add(l, I(NegInf, Inf))
+
+            | Write(expr) ->
+                let outputInterval = this.arithmetic labeling expr
+                if outputInterval = Bot then
+                    Map.empty
+                else
+                    labeling
