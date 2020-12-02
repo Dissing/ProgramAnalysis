@@ -1,4 +1,4 @@
-﻿namespace FrontEnd
+namespace FrontEnd
 
 type SourceFile(path: string, content: string) =
     member this.Path = path

@@ -1,4 +1,4 @@
-﻿namespace Driver
+namespace Driver
 
 module ArgumentParser =
 

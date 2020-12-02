@@ -1,4 +1,4 @@
-﻿namespace FrontEnd
+namespace FrontEnd
 
 open System.Collections
 open System.Collections

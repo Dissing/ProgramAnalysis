@@ -1,4 +1,4 @@
-﻿namespace Analysis
+namespace Analysis
 open System
 open FrontEnd
 open FrontEnd.ProgramGraph

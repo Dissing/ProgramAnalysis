@@ -1,4 +1,4 @@
-﻿namespace FrontEnd
+namespace FrontEnd
 
 type Context<'state> =
         | Ok of 'state

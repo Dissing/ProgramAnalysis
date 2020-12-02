@@ -1,4 +1,4 @@
-﻿module Driver.Benchmark
+module Driver.Benchmark
 
     open Analysis
     open Analysis.Analyses
