@@ -20,7 +20,7 @@ type StrongComponentsWorklist(currentNodes: List<ProgramGraph.Node>, pendingNode
             | [] -> if pendingNodes.IsEmpty
                     then None
                     else let (S, pPrime) = scRelation.GetTopNodes pendingNodes
-                         let VrP = rpOrdering.getOrder(S)
+                         let VrP = rpOrdering.sortNodes(S)
                          Some((VrP.Head), upcast StrongComponentsWorklist(VrP.Tail, pPrime, rpOrdering, scRelation))
             
         member this.insert(q) =
