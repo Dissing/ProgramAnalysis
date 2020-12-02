@@ -1,4 +1,4 @@
-namespace Analysis.Worklists
+﻿namespace Analysis.Worklists
 
 open FrontEnd
 
@@ -19,7 +19,6 @@ type RoundRobinWorklist(currentNodes: List<ProgramGraph.Node>, pendingNodes: Set
             | [] -> if pendingNodes.IsEmpty
                     then None
                     else let VrP = rpOrdering.sortNodes(pendingNodes)
-                         printfn
                          Some((VrP.Head), upcast RoundRobinWorklist(VrP.Tail, Set.empty, rpOrdering))
             
         member this.insert(q) =

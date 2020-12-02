@@ -230,10 +230,12 @@ type IntervalAnalysis(graph: AnnotatedGraph, minInt: int, maxInt: int) =
             match (x,y) with
             | (_, NegInf) -> failwith "div1 requires positive divisor"
             | (_, Val x) when x <= 0 -> failwith "div1 requires positive divisor"
-            | (_, Inf) -> Val 0
-            | (NegInf, _) -> NegInf
-            | (Inf, _) -> Inf
+            | (Val _, Inf) -> Val 0
+            | (NegInf, Val _) -> NegInf
+            | (Inf, Val _) -> Inf
             | (Val x, Val y) -> Val (x / y)
+            | (Inf, Inf) -> Val 0
+            | (NegInf, Inf) -> Val 0
         let zmin = minOfBounds (minOfBounds (div1 z11 z21) (div1 z11 z22)) (minOfBounds (div1 z12 z21) (div1 z12 z22))
         let zmax = maxOfBounds (maxOfBounds (div1 z11 z21) (div1 z11 z22)) (maxOfBounds (div1 z12 z21) (div1 z12 z22))
         (zmin, zmax)
@@ -380,7 +382,7 @@ type IntervalAnalysis(graph: AnnotatedGraph, minInt: int, maxInt: int) =
                     Map.empty
                 else
                     labeling.Add(l, this.arithmetic labeling expr)
-            | AssignLiteral(strct, exprs) ->
+            | RecordAssign(strct, exprs) ->
                 exprs |> List.fold
                     (fun s (field, expr) ->
                     if Map.isEmpty s then

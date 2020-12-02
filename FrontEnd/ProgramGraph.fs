@@ -8,7 +8,7 @@ module ProgramGraph =
         | Allocate of Declaration
         | Free of Declaration
         | Assign of Location * ArithmeticExpr
-        | AssignLiteral of Ident * (Ident * ArithmeticExpr) List
+        | RecordAssign of Ident * (Ident * ArithmeticExpr) List
         | Condition of BooleanExpr
         | Read of Location
         | Write of ArithmeticExpr

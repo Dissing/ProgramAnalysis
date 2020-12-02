@@ -40,7 +40,7 @@ type FaintVariableAnalysis() =
                 Set.union (labeling.Remove x) fv
             else
                 labeling
-        | AssignLiteral(s, exprs) ->
+        | RecordAssign(s, exprs) ->
             let (gen, kill) =
                  List.fold
                      (fun ((gen, kill): FV * FV) (field, expr) ->

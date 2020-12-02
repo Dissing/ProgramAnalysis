@@ -146,7 +146,7 @@ module Expressions =
                 (nonTrivialArithmeticExpressions expr)
         | Assign(_, expr) ->
             nonTrivialArithmeticExpressions expr
-        | AssignLiteral(_, exprs) ->
+        | RecordAssign(_, exprs) ->
             exprs |> List.fold (fun s (_, expr) ->
                 Set.union s (nonTrivialArithmeticExpressions expr)) Set.empty
         | Condition(expr) ->
