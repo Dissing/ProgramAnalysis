@@ -7,6 +7,7 @@ type RoundRobinWorklist(currentNodes: List<ProgramGraph.Node>, pendingNodes: Set
     
     static member empty(graph: ProgramGraph.Graph) =
         let (_, rpOrdering) = ReversePostorder.DFST graph
+        rpOrdering.print()
         RoundRobinWorklist([], Set.empty, rpOrdering)
     
     interface Analysis.IWorklist with
@@ -17,7 +18,8 @@ type RoundRobinWorklist(currentNodes: List<ProgramGraph.Node>, pendingNodes: Set
             | q::qs -> Some(q, upcast RoundRobinWorklist(qs, pendingNodes, rpOrdering))
             | [] -> if pendingNodes.IsEmpty
                     then None
-                    else let VrP = rpOrdering.getOrder(pendingNodes)
+                    else let VrP = rpOrdering.sortNodes(pendingNodes)
+                         printfn
                          Some((VrP.Head), upcast RoundRobinWorklist(VrP.Tail, Set.empty, rpOrdering))
             
         member this.insert(q) =

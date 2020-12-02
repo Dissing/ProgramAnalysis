@@ -34,7 +34,7 @@ type NaturalComponentsWorklist(currentNodes: List<ProgramGraph.Node>, pendingNod
                          printfn ""
                          printfn ""
                          *)
-                         let VrP = rpOrdering.getOrder(S)
+                         let VrP = rpOrdering.sortNodes(S)
                          Some((VrP.Head), upcast NaturalComponentsWorklist(VrP.Tail, pPrime, rpOrdering, ncRelation))
             
         member this.insert(q) =
