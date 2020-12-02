@@ -26,14 +26,14 @@ type FaintVariableAnalysis() =
     override this.analyseEdge ((_, action, _): Edge) (labeling: FV) =
         match action with
         | Allocate(_) | Free(_) -> labeling
-        | Assign((AST.Array(x,index), expr)) ->
+        | Assign(AST.Array(x,index), expr) ->
             let x = Array(x)
             if labeling.Contains x then
                 let fv = Set.union (arithmeticFreeVariables expr) (arithmeticFreeVariables index)
                 Set.union (labeling.Remove x) fv
             else
                 labeling
-        | Assign((x, expr)) ->
+        | Assign(x, expr) ->
             let x = AmalgamatedLocation.fromLocation x
             if labeling.Contains x then
                 let fv = arithmeticFreeVariables expr

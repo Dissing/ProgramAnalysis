@@ -1,4 +1,5 @@
 ﻿namespace FrontEnd
+open System.Text.RegularExpressions
 
 module Lexer =
 
@@ -60,21 +61,26 @@ module Lexer =
         | Ok (c) when requirement(c) -> (consume s) >>= extractLexeme (lexeme + string c) requirement
         | _ -> Ok((lexeme, s))
 
+    let isDigit (c: char) =
+        Regex.IsMatch(string c, "[0-9]")
 
     let lexInteger (tokens: Token List) (s: LexingState) =
         context {
             let fromPos = currentPos s
-            let! (lexeme, consumedLexeme) = extractLexeme "" System.Char.IsDigit s
+            let! (lexeme, consumedLexeme) = extractLexeme "" isDigit s
             let number = int lexeme
             let toPos = (currentPos consumedLexeme) - 1
             let span = { From = fromPos; To = toPos }
             return ((INTEGER(number), span) :: tokens, consumedLexeme)
         }
+        
+    let isLetter (c: char) =
+            Regex.IsMatch(string c, "([A-Z]|[a-z])")
 
     let lexIdentifier (tokens: Token List) (s: LexingState) =
         context {
             let fromPos = currentPos s
-            let! (lexeme, consumedLexeme) = extractLexeme "" System.Char.IsLetter s
+            let! (lexeme, consumedLexeme) = extractLexeme "" isLetter s
             let toPos = (currentPos consumedLexeme) - 1
             let span = { From = fromPos; To = toPos }
 
@@ -88,6 +94,7 @@ module Lexer =
                 | "read" -> READ
                 | "write" -> WRITE
                 | "int" -> INT
+                | "not" -> NOT
                 | other -> IDENTIFIER(other)
 
             return ((kind, span) :: tokens, consumedLexeme)
@@ -127,14 +134,14 @@ module Lexer =
                     | ',' -> lexSingle COMMA tokens s
                     | '<' -> lexConditionalDouble '=' LESSER_EQUAL LESSER tokens s
                     | '>' -> lexConditionalDouble '=' GREATER_EQUAL GREATER tokens s
-                    | '!' -> lexConditionalDouble '=' NOT_EQUAL NOT tokens s
+                    | '!' -> lexDouble '=' NOT_EQUAL tokens s
                     | ':' -> lexDouble '=' ASSIGN tokens s
                     | '|' -> lexDouble '|' OR tokens s
                     | '&' -> lexDouble '&' AND tokens s
                     | '=' -> lexDouble '=' EQUAL tokens s
                     | c ->
-                        if System.Char.IsLetter(c) then lexIdentifier tokens s
-                        else if System.Char.IsDigit(c) then lexInteger tokens s
+                        if isLetter(c) then lexIdentifier tokens s
+                        else if isDigit(c) then lexInteger tokens s
                         else Error(sprintf "Unknown character '%c'" c, {From = s.CurrentPosition; To = s.CurrentPosition})
 
                 return! Scan(updatedTokens, consumedState)

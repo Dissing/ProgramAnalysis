@@ -4,18 +4,14 @@ open FrontEnd.AST
 
 module ProgramGraph =
     
-    type AssignExpr = Location * ArithmeticExpr
-    type AssignStructExpr = Ident * (Ident * ArithmeticExpr) List
-    
     type Action =
         | Allocate of Declaration
         | Free of Declaration
-        | Assign of AssignExpr
-        | AssignLiteral of AssignStructExpr
+        | Assign of Location * ArithmeticExpr
+        | AssignLiteral of Ident * (Ident * ArithmeticExpr) List
         | Condition of BooleanExpr
         | Read of Location
         | Write of ArithmeticExpr
-        | Skip
        
     type Node = int
     type Edge = Node * Action * Node

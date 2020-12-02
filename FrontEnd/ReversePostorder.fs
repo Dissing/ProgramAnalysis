@@ -9,8 +9,8 @@ module ReversePostorder =
         let revOrder = Map.fold (fun (m : Map<Node, int>) node idx -> m.Add(idx, node)) Map.empty order
         
         let orderSort n1 n2 =
-                if order.Item(n1) < order.Item(n2) then 1 else
-                if order.Item(n1) > order.Item(n2) then -1 else
+                if order.Item(n1) < order.Item(n2) then -1 else
+                if order.Item(n1) > order.Item(n2) then 1 else
                 0
         
         member this.addNode(n, idx) =

@@ -30,7 +30,7 @@ module Printer =
     let rec ArithmeticPrinter (output : string) (expr : ArithmeticExpr) =
         match expr with
         | Loc loc -> match loc with
-                        | Location.Identifier ident ->
+                        | Location.Variable ident ->
                             let output = output + ident
                             (output, false)
                         | Location.Array (ident, expr) ->

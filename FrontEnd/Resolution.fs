@@ -48,37 +48,41 @@ module Resolution =
 
     let nameOfDecl =
         function
-        | Integer (ident) -> ident
+        | VarDecl (ident) -> ident
         | ArrayDecl (ident, _) -> ident
-        | Struct (ident, _) -> ident
+        | RecordDecl (ident, _) -> ident
 
     let rec resolveLocation ((stack, fresh): ResolutionState) (loc: Location) =
         let span = { From = 0; To = 0 }
         match loc with
-        | Identifier (ident) ->
+        | Variable (ident) ->
             context {
                 match lookup stack ident with
-                | Some (Integer i) -> return ((stack, fresh), Identifier(i))
+                | Some (VarDecl i) -> return ((stack, fresh), Variable(i))
                 | Some (ArrayDecl _) -> return! Error(sprintf "Tried using array %s as an integer" ident, span)
-                | Some (Struct _) -> return! Error(sprintf "Tried using struct %s as an integer" ident, span)
+                | Some (RecordDecl _) -> return! Error(sprintf "Tried using struct %s as an integer" ident, span)
                 | None -> return! Error(sprintf "Used of undeclared integer %s" ident, span)
             }
         | Array (ident, expr) ->
             context {
                 match lookup stack ident with
-                | Some (Integer _) -> return! Error(sprintf "Tried using integer %s as an array" ident, span)
+                | Some (VarDecl _) -> return! Error(sprintf "Tried using integer %s as an array" ident, span)
                 | Some (ArrayDecl (i, _)) ->
                     let! (s, expr) = resolveArithmeticExpr (stack, fresh) expr
                     return (s, Array(i, expr))
-                | Some (Struct _) -> return! Error(sprintf "Tried using struct %s as an arr" ident, span)
+                | Some (RecordDecl _) -> return! Error(sprintf "Tried using struct %s as an arr" ident, span)
                 | None -> return! Error(sprintf "Used of undeclared array %s" ident, span)
             }
         | Field (strct, field) ->
             context {
                 match lookup stack strct with
-                | Some (Integer _) -> return! Error(sprintf "Tried accessing field %s on integer %s" field strct, span)
+                | Some (VarDecl _) -> return! Error(sprintf "Tried accessing field %s on integer %s" field strct, span)
                 | Some (ArrayDecl _) -> return! Error(sprintf "Tried accessing field %s on array %s" field strct, span)
-                | Some (Struct (name, fields)) -> return ((stack, fresh), Field(name, field))
+                | Some (RecordDecl (name, fields)) ->
+                    if List.contains field fields then
+                        return ((stack, fresh), Field(name, field))
+                    else
+                        return! Error(sprintf "Tried accessing field %s but record %s has no such field" field strct, span)
                 | None -> return! Error(sprintf "Used of undeclared struct %s" strct, span)
             }
 
@@ -125,10 +129,10 @@ module Resolution =
 
     let rec resolveDecl (s: ResolutionState) =
         function
-        | Integer ident ->
+        | VarDecl ident ->
             context {
                 let (s, freshIdent) = makeFresh s ident
-                let decl = Integer freshIdent
+                let decl = VarDecl freshIdent
                 let s = add s ident decl
                 return (s, decl)
             }
@@ -139,10 +143,10 @@ module Resolution =
                 let s = add s ident decl
                 return (s, decl)
             }
-        | Struct (ident, fields) ->
+        | RecordDecl (ident, fields) ->
             context {
                 let (s, freshIdent) = makeFresh s ident
-                let decl = Struct(freshIdent, fields)
+                let decl = RecordDecl(freshIdent, fields)
                 let s = add s ident decl
                 return (s, decl)
             }
@@ -161,17 +165,17 @@ module Resolution =
                 let! (s, expr) = resolveArithmeticExpr s expr
                 return (s, Assign(loc, expr))
             }
-        | StructAssign (ident, fields) ->
+        | RecordAssign (ident, fields) ->
             context {
                 let! (s, ident, field_names) =
                     context {
                         let span = { From = 0; To = 0 }
                         match lookup (fst s) ident with
-                        | Some (Integer _) ->
+                        | Some (VarDecl _) ->
                             return! Error(sprintf "Tried assigning struct literal to integer %s" ident, span)
                         | Some (ArrayDecl _) ->
                             return! Error(sprintf "Tried assigning struct literal to array %s" ident, span)
-                        | Some (Struct (name, field_names)) -> return (s, name, field_names)
+                        | Some (RecordDecl (name, field_names)) -> return (s, name, field_names)
                         | None -> return! Error(sprintf "Used of undeclared struct %s" ident, span)
                     }
 
@@ -190,7 +194,7 @@ module Resolution =
 
                 let! (s, fields) = helper (s, fields)
 
-                return (s, StructAssign(ident, fields))
+                return (s, RecordAssign(ident, fields))
             }
         | If (cond, thenBlock, elseBlock) ->
             context {

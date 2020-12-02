@@ -80,15 +80,15 @@ type AmalgamatedLocation =
     | Field of AST.Ident * AST.Ident
     static member fromLocation (loc: AST.Location) =
         match loc with
-        | AST.Identifier(i) -> Variable(i)
+        | AST.Variable(i) -> Variable(i)
         | AST.Array(i, _) -> Array(i)
         | AST.Field(s,f) -> Field(s,f)
         
     static member fromDeclaration (decl: AST.Declaration) =
         match decl with
-        | AST.Integer i -> Set.singleton (Variable i)
+        | AST.VarDecl i -> Set.singleton (Variable i)
         | AST.ArrayDecl (i,_) -> Set.singleton (Array i)
-        | AST.Struct (i, fs) -> Set.ofList fs |> Set.map (fun f -> Field(i, f))
+        | AST.RecordDecl (i, fs) -> Set.ofList fs |> Set.map (fun f -> Field(i, f))
         
     static member fromAnnotation (annotation: AST.DeclarationInfo) =
         annotation |> Map.toSeq |>

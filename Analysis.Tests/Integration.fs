@@ -53,8 +53,7 @@ let testAnalysis<'L when 'L : comparison> (annotatedGraph: AnnotatedGraph) (anal
 [<Test>]
 let reachingDefinitionsIntegration () =
     let annotatedGraph = FrontEnd.compile statisticalSource
-    let (_, (_, edges)) = annotatedGraph
-    testAnalysis annotatedGraph (ReachingDefinitionsAnalysis(edges))
+    testAnalysis annotatedGraph (ReachingDefinitionsAnalysis(annotatedGraph))
     
 [<Test>]
 let liveVariablesIntegration () =

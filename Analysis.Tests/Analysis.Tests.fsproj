@@ -14,7 +14,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Compile Include="Library.fs" />
+      <Compile Include="Utils.fs" />
       <Compile Include="DangerousVariables.fs" />
       <Compile Include="FaintVariables.fs" />
       <Compile Include="LiveVariables.fs" />
@@ -26,6 +26,7 @@
       <Compile Include="Integration.fs" />
       <Compile Include="VeryBusyExpressions.fs" />
       <Compile Include="AvailableExpressions.fs" />
+      <Compile Include="Library.fs" />
     </ItemGroup>
 
     <ItemGroup>

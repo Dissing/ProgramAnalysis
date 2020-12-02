@@ -22,16 +22,17 @@ module Parser =
         then ctx
         else failwithf "Expected token kind %A but got %A" kind (head ctx)
 
-    let prefixPrecedence = 6
+    let prefixPrecedence = 0
+    let maxPrecedence = 6
 
     let arithmeticPrecedenceOf =
         function
-        | MULTIPLICATION -> 5
-        | DIVISION -> 5
-        | MODULO -> 5
-        | PLUS -> 4
-        | MINUS -> 4
-        | _ -> 0
+        | MULTIPLICATION -> 1
+        | DIVISION -> 1
+        | MODULO -> 1
+        | PLUS -> 2
+        | MINUS -> 2
+        | _ -> 6
 
     let booleanPrecedenceOf =
         function
@@ -41,9 +42,9 @@ module Parser =
         | GREATER_EQUAL -> 3
         | EQUAL -> 3
         | NOT_EQUAL -> 3
-        | AND -> 2
-        | OR -> 1
-        | _ -> 0
+        | AND -> 4
+        | OR -> 5
+        | _ -> 6
 
     type AorB =
         | A of ArithmeticExpr
@@ -102,7 +103,7 @@ module Parser =
                 let ctx = expect SEMI_COLON ctx
 
                 let stmt =
-                    Allocate(if array_size.IsSome then ArrayDecl(ident, array_size.Value) else Integer(ident))
+                    Allocate(if array_size.IsSome then ArrayDecl(ident, array_size.Value) else VarDecl(ident))
 
                 parseStmts ctx (stmt :: stmts)
 
@@ -171,7 +172,7 @@ module Parser =
         let (ctx, fields) = fieldHelper ctx []
         let (ctx, strctName) = parseIdent ctx
         let ctx = expect SEMI_COLON ctx
-        let strct = Struct(strctName, fields)
+        let strct = RecordDecl(strctName, fields)
         (ctx, strct)
 
     and parseIdent (ctx: ParsingContext) =
@@ -190,7 +191,7 @@ module Parser =
         let (ctx, fields) = helper ctx []
         let ctx = expect RIGHT_CURLY ctx
         match dest with
-        | Identifier (ident) -> (ctx, StructAssign(ident, fields))
+        | Variable (ident) -> (ctx, RecordAssign(ident, fields))
         | other -> failwithf "Can only assign struct literals to variables and not %A" other
 
 
@@ -206,7 +207,7 @@ module Parser =
             let ctx = expect DOT ctx
             let (ctx, field) = parseIdent ctx
             (ctx, Location.Field(ident, field))
-        | _ -> (ctx, Location.Identifier ident)
+        | _ -> (ctx, Location.Variable ident)
 
     and parseArithmeticExpr' (ctx: ParsingContext) (precedence: int) =
         let (ctx, left) =
@@ -218,7 +219,7 @@ module Parser =
                 let (ctx, inner) =
                     parseArithmeticExpr' (tail ctx) prefixPrecedence
 
-                (ctx, ArithmeticUnary(ArithmeticUnaryOperator.Negation, inner))
+                (ctx, ArithmeticUnary(ArithmeticUnaryOperator.Negative, inner))
             | LEFT_PAREN ->
                 let (ctx, inner) = parseArithmeticExpr (tail ctx)
                 (expect RIGHT_PAREN ctx, inner)
@@ -227,7 +228,7 @@ module Parser =
 
         let rec precedenceHelper (ctx: ParsingContext) (left: ArithmeticExpr) =
             let currentPrecedence = arithmeticPrecedenceOf (kindOfHead ctx)
-            if precedence >= currentPrecedence then
+            if precedence <= currentPrecedence then
                 (ctx, left)
             else
                 let operator =
@@ -246,7 +247,7 @@ module Parser =
 
         precedenceHelper ctx left
 
-    and parseArithmeticExpr (ctx: ParsingContext) = parseArithmeticExpr' ctx 0
+    and parseArithmeticExpr (ctx: ParsingContext) = parseArithmeticExpr' ctx maxPrecedence
 
     //Consider unifying the parsing of arithmetic and boolean expressions
     and parseBooleanExpr (ctx: ParsingContext) =
@@ -270,7 +271,7 @@ module Parser =
 
             let rec precedenceHelper (ctx: ParsingContext) (left: AorB) =
                 let currentPrecedence = booleanPrecedenceOf (kindOfHead ctx)
-                if precedence >= currentPrecedence then
+                if precedence <= currentPrecedence then
                     (ctx, left)
                 else
                     match left with
@@ -308,7 +309,7 @@ module Parser =
 
             precedenceHelper ctx left
 
-        let (ctx, expr) = parseBooleanExpr' ctx 0
+        let (ctx, expr) = parseBooleanExpr' ctx maxPrecedence
         match expr with
         | B (b) -> (ctx, b)
         | A (a) -> failwithf "Expected boolean expression but got pure arithmetic expression %A" a

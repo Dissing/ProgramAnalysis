@@ -4,7 +4,7 @@ module AST =
     type Ident = string
      
     type ArithmeticUnaryOperator =
-        | Negation
+        | Negative
          
     type BooleanUnaryOperator =
         | Not
@@ -28,7 +28,7 @@ module AST =
 
      
     type Location =
-        | Identifier of Ident
+        | Variable of Ident
         | Array of Ident * ArithmeticExpr
         | Field of Ident * Ident
     and ArithmeticExpr =
@@ -43,14 +43,14 @@ module AST =
         | BooleanBinary of BooleanExpr * BooleanBinaryOperator * BooleanExpr
          
     type Declaration =
-           | Integer of Ident
+           | VarDecl of Ident
            | ArrayDecl of Ident * int
-           | Struct of Ident * Ident List
+           | RecordDecl of Ident * Ident List
     and Statement =
         | Allocate of Declaration
         | Free of Declaration
         | Assign of Location * ArithmeticExpr
-        | StructAssign of Ident * (Ident * ArithmeticExpr) list
+        | RecordAssign of Ident * (Ident * ArithmeticExpr) list
         | If of BooleanExpr * Block * Block option
         | While of BooleanExpr * Block
         | Read of Location
@@ -59,7 +59,7 @@ module AST =
     
 
     type DeclarationInfo = Map<Ident,Declaration>
-    type AST = DeclarationInfo * Statement List
+    type AST = DeclarationInfo * Block
     
     
     let rec arithmeticFreeVariables (a: ArithmeticExpr) =

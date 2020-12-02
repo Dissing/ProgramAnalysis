@@ -15,6 +15,7 @@
 
     <ItemGroup>
         <Compile Include="ArgumentParser.fs" />
+        <Compile Include="Library.fs" />
     </ItemGroup>
 
     <ItemGroup>

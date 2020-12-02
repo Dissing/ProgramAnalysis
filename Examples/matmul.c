@@ -3,7 +3,6 @@ int[100] B;
 int[100] C;
 
 int n;
-int sum;
 int i;
 int j;
 int k;
@@ -14,6 +13,7 @@ i := 1;
 while (i < n) {
   j := 1;
   while (j < n) {
+    int sum;
     sum := 0;
     k := 1;
     while (k < n) {
