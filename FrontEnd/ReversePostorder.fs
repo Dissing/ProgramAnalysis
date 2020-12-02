@@ -25,9 +25,9 @@ module ReversePostorder =
         member this.after(n1, n2) =
             order.Item(n1) > order.Item(n2)
             
-        member this.getOrder(nodes) =
+        member this.sortNodes(nodes) =
             List.sortWith orderSort (Set.toList nodes)
-            
+        
         member this.print() =
             order |> Map.toList |> printfn "Reverse Postorder: %A"
             
