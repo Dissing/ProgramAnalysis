@@ -1,4 +1,4 @@
-﻿namespace FrontEnd
+namespace FrontEnd
 
 open FrontEnd.AST;
 open FrontEnd.ProgramGraph;

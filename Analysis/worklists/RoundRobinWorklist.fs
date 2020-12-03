@@ -1,4 +1,4 @@
-﻿namespace Analysis.Worklists
+namespace Analysis.Worklists
 
 open FrontEnd
 
