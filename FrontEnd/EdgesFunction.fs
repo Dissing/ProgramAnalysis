@@ -48,13 +48,13 @@ module EdgesFunction =
                     let eList = (startNode, Assign (loc, aExpr), nodeIndex) :: eList
                     edges tail nodeIndex (nodeIndex+1) endNode nList eList
 
-            | RecordAssign(id, faExprL) :: tail ->
+            | AST.RecordAssign(id, faExprL) :: tail ->
                 if tail.IsEmpty && endNode <> -1 then
-                    let eList = (startNode, AssignLiteral (id, faExprL), endNode) :: eList
+                    let eList = (startNode, RecordAssign (id, faExprL), endNode) :: eList
                     (nodeIndex, nList, eList)
                 else
                     let nList = nodeIndex :: nList
-                    let eList = (startNode, AssignLiteral (id, faExprL), nodeIndex) :: eList
+                    let eList = (startNode, RecordAssign (id, faExprL), nodeIndex) :: eList
                     edges tail nodeIndex (nodeIndex+1) endNode nList eList
 
             | If(bExpr, block, None) :: tail ->

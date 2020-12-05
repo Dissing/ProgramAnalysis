@@ -47,7 +47,7 @@ type AvailableExpressionsAnalysis(graph: AnnotatedGraph) =
                 let assignExprs = nonTrivialArithmeticExpressions expr
                 let gen = expressionsNotContainingLocation assignExprs loc
                 (kill, gen)
-            | AssignLiteral(s, exprs) ->
+            | RecordAssign(s, exprs) ->
                 List.fold (fun (kill, gen) (field, expr) ->
                     let loc = Field(s, field)
                     let addKill = expressionsContainingLocation allExpressions loc

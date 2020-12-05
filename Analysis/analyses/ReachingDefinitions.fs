@@ -67,7 +67,7 @@ type ReachingDefinitionsAnalysis(graph: AnnotatedGraph) =
             let kill = this.exhaustiveKill loc
             let gen = Set.singleton (loc, Some(src), dst)
             (kill, gen)
-        | AssignLiteral(name, exprs) ->
+        | RecordAssign(name, exprs) ->
             let kill = List.map (fun (field,_) -> this.exhaustiveKill (Field(name, field))) exprs |> List.reduce Set.union
             let gen = List.map (fun (field,_) -> (Field(name, field), Some(src), dst)) exprs |> Set.ofList
             (kill, gen)

@@ -353,6 +353,19 @@ let intervalDivision () =
     Assert.That(analysis.division r q, Is.EqualTo(I(Val 0, Val 0)))
     Assert.That(analysis.division r r, Is.EqualTo(Bot))
     
+    let analysis = IntervalAnalysis((Map.empty, ([],[])), -10, 10)
+    let a = I(Val 0, Val 7)
+    let b = I(Val -7, Val 0)
+    let c = I(Val 3, Val 4)
+    let d = I(Val -4, Val -3)
+    let e = I(Val -4, Val 4)
+    Assert.That(analysis.division a c, Is.EqualTo(I(Val 0, Val 2)))
+    Assert.That(analysis.division b c, Is.EqualTo(I(Val -2, Val 0)))
+    Assert.That(analysis.division a d, Is.EqualTo(I(Val -2, Val 0)))
+    Assert.That(analysis.division b d, Is.EqualTo(I(Val 0, Val 2)))
+    Assert.That(analysis.division a e, Is.EqualTo(I(Val -7, Val 7)))
+    Assert.That(analysis.division b e, Is.EqualTo(I(Val -7, Val 7)))
+    
 [<Test>]
 let intervalModulo () =
     let x = I(Val -2, Val 2)
@@ -437,6 +450,19 @@ let intervalModulo () =
     Assert.That(analysis.modulo v r, Is.EqualTo(Bot))
     Assert.That(analysis.modulo v u, Is.EqualTo(I(Val -1, Val 0)))
     Assert.That(analysis.modulo v v, Is.EqualTo(I(Val -1, Val 0)))
+    
+    let analysis = IntervalAnalysis((Map.empty, ([],[])), -10, 10)
+    let a = I(Val 0, Val 7)
+    let b = I(Val -7, Val 0)
+    let c = I(Val 3, Val 4)
+    let d = I(Val -4, Val -3)
+    let e = I(Val -4, Val 4)
+    Assert.That(analysis.modulo a c, Is.EqualTo(I(Val 0, Val 3)))
+    Assert.That(analysis.modulo b c, Is.EqualTo(I(Val -3, Val 0)))
+    Assert.That(analysis.modulo a d, Is.EqualTo(I(Val 0, Val 3)))
+    Assert.That(analysis.modulo b d, Is.EqualTo(I(Val -3, Val 0)))
+    Assert.That(analysis.modulo a e, Is.EqualTo(I(Val 0, Val 3)))
+    Assert.That(analysis.modulo b e, Is.EqualTo(I(Val -3, Val 0)))
 
 [<Test>]
 let intervalDivisionByZero () =

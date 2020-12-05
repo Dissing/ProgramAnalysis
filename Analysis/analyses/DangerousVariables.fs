@@ -38,7 +38,7 @@ type DangerousVariableAnalysis() =
                 labeling.Remove(AmalgamatedLocation.fromLocation x)
             else
                 labeling.Add(AmalgamatedLocation.fromLocation x)
-        | AssignLiteral(s, exprs) ->
+        | RecordAssign(s, exprs) ->
             let (gen, kill) =
                  List.fold
                      (fun ((gen, kill): DV * DV) (field, expr) ->

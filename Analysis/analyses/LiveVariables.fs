@@ -45,7 +45,7 @@ type LiveVariablesAnalysis() =
             let kill = Set.singleton (AmalgamatedLocation.fromLocation x)
             let gen = arithmeticFreeVariables expr
             (kill, gen)
-        | AssignLiteral(s, exprs) ->
+        | RecordAssign(s, exprs) ->
             List.fold (fun (kill, gen) (field, expr) ->
                 let singleton = Set.singleton (Field (s, field))
                 let fv = arithmeticFreeVariables expr

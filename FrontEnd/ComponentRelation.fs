@@ -15,25 +15,23 @@ module ComponentRelation =
         let rec ComponentsContainedInOther (comps : (int * (Node Set)) List) (relation : (int * int) Set)=
             match comps with
             | [] -> relation
-            | (idx1, comp1)::tail -> let relation = List.fold (fun (rel : (int * int) Set) (idx2, comp2) -> if (Set.difference comp1 comp2) = Set.empty
-                                                                                                            then rel
-                                                                                                            else if Set.isSubset comp1 comp2
-                                                                                                            then rel.Add(idx1, idx2)
-                                                                                                            else if Set.isSubset comp2 comp1
-                                                                                                            then rel.Add(idx2, idx1)
-                                                                                                            else rel
-                                                      ) relation tail
-                                     ComponentsContainedInOther tail relation
+            | (idx1, comp1)::tail ->
+                let relation = List.fold (fun (rel : (int * int) Set) (idx2, comp2) ->
+                    if (Set.difference comp1 comp2) = Set.empty then rel
+                    else if Set.isSubset comp1 comp2 then rel.Add(idx1, idx2)
+                    else if Set.isSubset comp2 comp1 then rel.Add(idx2, idx1)
+                    else rel
+                                ) relation tail
+                ComponentsContainedInOther tail relation
         
         //Create list of reduced components
         let reducedComponents = List.foldBack (fun curComponent componentList ->
-                                                  let removeNodes = List.fold (fun nodesToRemove realComponent ->
-                                                                                    if Set.isSuperset curComponent realComponent && curComponent <> realComponent
-                                                                                    then Set.union nodesToRemove realComponent
-                                                                                    else nodesToRemove
-                                                                               ) Set.empty components
-                                                  (Set.difference curComponent removeNodes)::componentList
-                                              ) components []
+            let removeNodes = List.fold (fun nodesToRemove realComponent ->
+                if Set.isSuperset curComponent realComponent && curComponent <> realComponent
+                    then Set.union nodesToRemove realComponent
+                else nodesToRemove
+                                        ) Set.empty components
+            (Set.difference curComponent removeNodes)::componentList) components []
         
         //Create list of (idx, reducedComponent)
         let idxReducedComponentList = List.fold (fun nc c -> (nc.Length, c)::nc) [] reducedComponents
@@ -59,11 +57,12 @@ module ComponentRelation =
             //printfn ""
             
             let relation = ComponentsContainedInOther idxComponentList Set.empty
-            List.fold (fun (rel : (int * int) Set) (n1, _, n2) -> let idx1 = NodeToComponentIdxMap.Item(n1)
-                                                                  let idx2 = NodeToComponentIdxMap.Item(n2)
-                                                                  if (idx1 <> idx2) && (not (rel.Contains(idx2, idx1)))
-                                                                  then rel.Add(idx1, idx2)
-                                                                  else rel 
+            List.fold (fun (rel : (int * int) Set) (n1, _, n2) ->
+                          let idx1 = NodeToComponentIdxMap.Item(n1)
+                          let idx2 = NodeToComponentIdxMap.Item(n2)
+                          if (idx1 <> idx2) && (not (rel.Contains(idx2, idx1)))
+                          then rel.Add(idx1, idx2)
+                          else rel 
                       ) relation edges
             
         //Collect the nodes in components this component (idx) has relations TO
@@ -77,11 +76,12 @@ module ComponentRelation =
             componentRelation
         
         member this.GetTopNodes (pendingNodes : Node Set) =
-            let topNodes = Set.fold (fun (top : Node Set) node -> let idx = NodeToComponentIdxMap.Item(node)
-                                                                  //printfn "NodeIdx: %d" node
-                                                                  //printfn "ComponentIdx: %d" idx
-                                                                  //printfn "Remove: %A" (CollectToNodes idx componentRelation)
-                                                                  Set.difference top (CollectToNodes idx componentRelation)
+            let topNodes = Set.fold (fun (top : Node Set) node ->
+                  let idx = NodeToComponentIdxMap.Item(node)
+                  //printfn "NodeIdx: %d" node
+                  //printfn "ComponentIdx: %d" idx
+                  //printfn "Remove: %A" (CollectToNodes idx componentRelation)
+                  Set.difference top (CollectToNodes idx componentRelation)
                            ) pendingNodes pendingNodes
             let remainder = Set.difference pendingNodes topNodes
             (topNodes, remainder)

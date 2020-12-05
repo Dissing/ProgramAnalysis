@@ -19,13 +19,20 @@ module Driver.Benchmark
             StrongComponentsWorklist.empty(pg);
             NaturalComponentsWorklist.empty(pg);
         ]
+        let reverseWorklists: List<IWorklist> = [
+            StackWorklist.empty();
+            QueueWorklist.empty();
+            RoundRobinWorklist.empty(reverse pg);
+            StrongComponentsWorklist.empty(reverse pg);
+            NaturalComponentsWorklist.empty(reverse pg);
+        ]
         let results = [
             List.map (measure graph (ReachingDefinitionsAnalysis(graph))) worklists
-            List.map (measure graph (LiveVariablesAnalysis())) worklists
+            List.map (measure graph (LiveVariablesAnalysis())) reverseWorklists
             List.map (measure graph (AvailableExpressionsAnalysis(graph))) worklists
-            List.map (measure graph (VeryBusyExpressionsAnalysis(graph))) worklists
+            List.map (measure graph (VeryBusyExpressionsAnalysis(graph))) reverseWorklists
             List.map (measure graph (DangerousVariableAnalysis())) worklists
-            List.map (measure graph (FaintVariableAnalysis())) worklists
+            List.map (measure graph (FaintVariableAnalysis())) reverseWorklists
             List.map (measure graph (SignDetectionAnalysis(graph))) worklists
             List.map (measure graph (IntervalAnalysis(graph, -2, 2))) worklists
         ]

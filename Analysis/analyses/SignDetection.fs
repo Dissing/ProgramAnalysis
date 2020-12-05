@@ -169,7 +169,7 @@ type SignDetectionAnalysis(graph: AnnotatedGraph) =
                     Map.empty
                 else
                    labeling.Add(x, signs) 
-            | AssignLiteral(s, exprs) ->
+            | RecordAssign(s, exprs) ->
                 let rec updateLiterals (ds: DS) s  exps =
                     match exps with
                     | [] -> ds

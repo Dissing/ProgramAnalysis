@@ -34,6 +34,24 @@ type Bound =
         
     member this.greatest (other: Bound) =
         if this.greaterThanOrEqual(other) then this else other
+    
+    member this.lessThanZero() =
+        match this with
+        | NegInf -> true
+        | Inf -> false
+        | Val x -> x < 0
+        
+    member this.greaterThanZero() =
+        match this with
+        | NegInf -> false
+        | Inf -> true
+        | Val x -> x > 0
+    
+    member this.negate() =
+        match this with
+        | NegInf -> Inf
+        | Inf -> NegInf
+        | Val x -> Val (-x)
         
 type Interval =
     | Bot
@@ -206,70 +224,45 @@ type IntervalAnalysis(graph: AnnotatedGraph, minInt: int, maxInt: int) =
                     elif zmax.greaterThanOrEqual(minBound) && zmax.lessThanOrEqual(maxBound) then zmax
                     else Inf
                  I(z1,z2)
-        
-    member this.division (left: Interval) (right: Interval) =
-        match (left, right) with
-        | (Bot, _) | (_, Bot) -> Bot
-        | (I(_,_),I(z21,z22)) when z21 = Val 0 && z22 = Val 0 -> Bot
-        | (I(z11,z12),I(z21,z22)) ->
-            let zmin =
-                match z22 with
-                | Inf -> Val 0
-                | Val x when x = 0 -> NegInf
-                | Val x -> Val (1 / x)
-                | NegInf -> failwith "Negative infinity upper bound!"
-            let zmax =
-                match z21 with
-                | NegInf -> Val 0
-                | Val x when x = 0 -> Inf
-                | Val x -> Val (1 / x)
-                | Inf -> failwith "Positive infinity lower bound!"
-            if (z21.lessThanOrEqual(Val -1) && z22.lessThanOrEqual(Val -1)) || (z21.greaterThanOrEqual(Val 1) && z22.greaterThanOrEqual(Val 1))
-            then this.multiplication (I(z11, z12)) (I(zmin, zmax))
-            elif z21 = Val 0
-            then this.multiplication (I(z11, z12)) (I(zmin, Val 1))
-            elif z22 = Val 0
-            then this.multiplication (I(z11, z12)) (I(Val -1, zmax))
-            else this.multiplication (I(z11, z12)) (I(Val -1, Val 1))
-            
     
-    member this.modulo (left: Interval) (right: Interval) =
+    member this.divisionPositive (z11: Bound, z12: Bound) (z21: Bound, z22: Bound) =
+        let div1 x y =
+            match (x,y) with
+            | (_, NegInf) -> failwith "div1 requires positive divisor"
+            | (_, Val x) when x <= 0 -> failwith "div1 requires positive divisor"
+            | (Val _, Inf) -> Val 0
+            | (NegInf, Val _) -> NegInf
+            | (Inf, Val _) -> Inf
+            | (Val x, Val y) -> Val (x / y)
+            | (Inf, Inf) -> Val 0
+            | (NegInf, Inf) -> Val 0
+        let zmin = minOfBounds (minOfBounds (div1 z11 z21) (div1 z11 z22)) (minOfBounds (div1 z12 z21) (div1 z12 z22))
+        let zmax = maxOfBounds (maxOfBounds (div1 z11 z21) (div1 z11 z22)) (maxOfBounds (div1 z12 z21) (div1 z12 z22))
+        (zmin, zmax)
+    member this.division (left: Interval) (right: Interval) =
         match (left, right) with
         | (Bot, _) | (_, Bot) -> Bot
         | (_,I(z21,z22)) when z21 = Val 0 && z22 = Val 0 -> Bot
         | (I(z11,z12),I(z21,z22)) ->
+            let (zmin, zmax) =
+                if z21.greaterThanZero() && z22.greaterThanZero() then
+                    this.divisionPositive (z11, z12) (z21, z22)
+                elif z21.lessThanZero() && z22.lessThanZero() then
+                    let (zmin, zmax) = this.divisionPositive (z11, z12) (z21.negate(), z22.negate())
+                    (zmax.negate(), zmin.negate())
+                elif z21 = Val 0 then
+                    this.divisionPositive (z11, z12) (Val 1, z22)
+                elif z22 = Val 0 then
+                    let (zmin, zmax) = this.divisionPositive (z11, z12) (Val 1, z21.negate())
+                    (zmax.negate(), zmin.negate())
+                else
+                    let (pzmin, pzmax) = this.divisionPositive (z11, z12) (Val 1, z22)
+                    let (nzmin, nzmax) = this.divisionPositive (z11, z12) (Val 1, z21.negate())
+                    let (nzmin, nzmax) = (nzmin.negate(), nzmax.negate())
+                    let zmin = minOfBounds (minOfBounds pzmin nzmin) (minOfBounds pzmax nzmax)
+                    let zmax = maxOfBounds (maxOfBounds pzmin nzmin) (maxOfBounds pzmax nzmax)
+                    (zmin, zmax)
             
-            let negate = function
-            | NegInf -> Inf
-            | Inf -> NegInf
-            | Val x -> Val (-x)
-
-            let rec mod1 (a: Bound) (d: Bound) =
-                match (a, d) with
-                | (_, NegInf) -> failwith "Mod1 requires positive divisor"
-                | (_, Val y) when y <= 0 -> failwith "Mod1 requires positive divisor"
-                | (NegInf, y) -> negate (mod1 Inf y)
-                | (Val x, y) when x < 0 -> negate (mod1 (Val (-x)) y)
-                | (Val x, _) when x = 0 -> Val x
-                | (Inf, Inf) -> Inf
-                | (Inf, Val y) -> Val (y-1)
-                | (Val x, Inf) -> Val x
-                | (Val x, Val y) -> Val (min x (y-1))
-                
-            let (minDivisor, maxDivisor) =
-                match (z21, z22) with
-                | (_, NegInf) | (Inf, _) -> failwith "Invalid infinity in interval bound"
-                | (NegInf, Inf) -> (Val 1, Inf)
-                | (NegInf, Val y) when y < 0 -> (Val (-y), Inf)
-                | (NegInf, Val _) -> (Val 1, Inf)
-                | (Val x, Inf) when x > 0 -> (Val x, Inf)
-                | (Val _, Inf) -> (Val 1, Inf)
-                | (Val x, Val y) when x > 0 && y > 0 -> (Val x, Val y)
-                | (Val x, Val y) when x < 0 && y < 0 -> (Val -y, Val -x)
-                | (Val x, Val y) -> (Val 1, Val (max (abs x) (abs y)))
-                
-            let zmin = minOfBounds (minOfBounds (mod1 z11 minDivisor) (mod1 z11 maxDivisor)) (minOfBounds (mod1 z12 minDivisor) (mod1 z12 maxDivisor))
-            let zmax = maxOfBounds (maxOfBounds (mod1 z11 minDivisor) (mod1 z11 maxDivisor)) (maxOfBounds (mod1 z12 minDivisor) (mod1 z12 maxDivisor))
             let z1 =
                if zmin.greaterThanOrEqual(maxBound) then maxBound
                elif zmin.greaterThanOrEqual(minBound) && zmin.lessThanOrEqual(maxBound) then zmin
@@ -279,7 +272,54 @@ type IntervalAnalysis(graph: AnnotatedGraph, minInt: int, maxInt: int) =
                elif zmax.greaterThanOrEqual(minBound) && zmax.lessThanOrEqual(maxBound) then zmax
                else Inf
             I(z1,z2)
-    
+
+    member this.moduloPositive (z11: Bound, z12: Bound) (z21: Bound, z22: Bound) =
+           let rec mod1 x y: Bound =
+               match (x,y) with
+               | (_, NegInf) -> failwith "Mod1 requires positive divisor"
+               | (_, Val y) when y <= 0 -> failwith "Mod1 requires positive divisor"
+               | (NegInf, y) -> (mod1 Inf y).negate()
+               | (Val x, y) when x < 0 -> (mod1 (Val (-x)) y).negate()
+               | (Val x, _) when x = 0 -> Val x
+               | (Inf, Inf) -> Inf
+               | (Inf, Val y) -> Val (y-1)
+               | (Val x, Inf) -> Val x
+               | (Val x, Val y) -> Val (min x (y-1))
+           let zmin = minOfBounds (minOfBounds (mod1 z11 z21) (mod1 z11 z22)) (minOfBounds (mod1 z12 z21) (mod1 z12 z22))
+           let zmax = maxOfBounds (maxOfBounds (mod1 z11 z21) (mod1 z11 z22)) (maxOfBounds (mod1 z12 z21) (mod1 z12 z22))
+           (zmin, zmax)
+        
+    member this.modulo (left: Interval) (right: Interval) =
+        match (left, right) with
+        | (Bot, _) | (_, Bot) -> Bot
+        | (_,I(z21,z22)) when z21 = Val 0 && z22 = Val 0 -> Bot
+        | (I(z11,z12),I(z21,z22)) ->
+            let (zmin, zmax) =
+                if z21.greaterThanZero() && z22.greaterThanZero() then
+                    this.moduloPositive (z11, z12) (z21, z22)
+                elif z21.lessThanZero() && z22.lessThanZero() then
+                    this.moduloPositive (z11, z12) (z22.negate(), z21.negate())
+                elif z21 = Val 0 then
+                    this.moduloPositive (z11, z12) (Val 1, z22)
+                elif z22 = Val 0 then
+                    this.moduloPositive (z11, z12) (Val 1, z21.negate())
+                else
+                    let (pzmin, pzmax) = this.moduloPositive (z11, z12) (Val 1, z22)
+                    let (nzmin, nzmax) = this.moduloPositive (z11, z12) (Val 1, z21.negate())
+                    let zmin = minOfBounds (minOfBounds pzmin nzmin) (minOfBounds pzmax nzmax)
+                    let zmax = maxOfBounds (maxOfBounds pzmin nzmin) (maxOfBounds pzmax nzmax)
+                    (zmin, zmax)
+            
+            let z1 =
+               if zmin.greaterThanOrEqual(maxBound) then maxBound
+               elif zmin.greaterThanOrEqual(minBound) && zmin.lessThanOrEqual(maxBound) then zmin
+               else NegInf
+            let z2 =
+               if zmax.lessThanOrEqual(minBound) then minBound
+               elif zmax.greaterThanOrEqual(minBound) && zmax.lessThanOrEqual(maxBound) then zmax
+               else Inf
+            I(z1,z2)
+
     member this.arithmetic (labeling: IA) = function
         | AST.Loc(AST.Array(x, index)) ->
             let boundsInterval = arrayBounds.[x]
@@ -342,7 +382,7 @@ type IntervalAnalysis(graph: AnnotatedGraph, minInt: int, maxInt: int) =
                     Map.empty
                 else
                     labeling.Add(l, this.arithmetic labeling expr)
-            | AssignLiteral(strct, exprs) ->
+            | RecordAssign(strct, exprs) ->
                 exprs |> List.fold
                     (fun s (field, expr) ->
                     if Map.isEmpty s then

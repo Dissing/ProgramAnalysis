@@ -45,7 +45,7 @@ type VeryBusyExpressionsAnalysis(graph: AnnotatedGraph) =
                 let kill = expressionsContainingLocation allExpressions loc
                 let gen = nonTrivialArithmeticExpressions expr
                 (kill, gen)
-            | AssignLiteral(s, exprs) ->
+            | RecordAssign(s, exprs) ->
                 List.fold (fun (kill, gen) (field, expr) ->
                     let loc = Field(s, field)
                     let addKill = expressionsContainingLocation allExpressions loc
