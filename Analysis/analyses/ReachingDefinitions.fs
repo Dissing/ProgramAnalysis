@@ -2,7 +2,7 @@ namespace Analysis.Analyses
 
 open System
 open Analysis
-open Analysis.Expressions
+//open Analysis.Expressions
 open FrontEnd
 open FrontEnd.ProgramGraph
 

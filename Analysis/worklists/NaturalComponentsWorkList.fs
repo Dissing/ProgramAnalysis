@@ -14,27 +14,20 @@ type NaturalComponentsWorklist(currentNodes: List<ProgramGraph.Node>, pendingNod
     
         member this.name = "Natural Components"
         
-        member this.extract() =
+        member this.extract() =                       
             match currentNodes with
             | q::qs -> Some(q, upcast NaturalComponentsWorklist(qs, pendingNodes, rpOrdering, ncRelation))
             | [] -> if pendingNodes.IsEmpty
                     then None
                     else let (S, pPrime) = ncRelation.GetTopNodes pendingNodes
-                         
-                         //(ncRelation.GetRelation() |> Seq.iter (printf "%A "))
+                         //printf "Top nodes: "
+                         //S |> Seq.iter (printf "%A ")
                          //printfn ""
-                         //printfn "S:"
-                         //(S |> Seq.iter (printf "%d "))
+                         //printf "Non-top nodes: "
+                         //pPrime |> Seq.iter (printf "%A ")
                          //printfn ""
-                         //printfn "P:"
-                         //(pPrime |> Seq.iter (printf "%d "))
-                         //printfn ""
-                         //printfn "PendingNodes:"
-                         //(pendingNodes |> Seq.iter (printf "%d "))
-                         //printfn ""
-                         //printfn ""
-                         
                          let VrP = rpOrdering.sortNodes(S)
+                         //printfn "Ordered top nodes: %A" VrP
                          Some((VrP.Head), upcast NaturalComponentsWorklist(VrP.Tail, pPrime, rpOrdering, ncRelation))
             
         member this.insert(q) =

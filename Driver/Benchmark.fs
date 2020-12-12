@@ -12,6 +12,7 @@ module Driver.Benchmark
 
     let perform ((decls, pg) as graph: AnnotatedGraph) =
         
+        //printfn "Forward Orderings:"
         let worklists: List<IWorklist> = [
             StackWorklist.empty();
             QueueWorklist.empty();
@@ -19,6 +20,7 @@ module Driver.Benchmark
             StrongComponentsWorklist.empty(pg);
             NaturalComponentsWorklist.empty(pg);
         ]
+        //printfn "Backward Orderings:"
         let reverseWorklists: List<IWorklist> = [
             StackWorklist.empty();
             QueueWorklist.empty();

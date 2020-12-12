@@ -5,24 +5,11 @@ open FrontEnd.ProgramGraph
 module ComponentRelation =
     
     type ComponentRelation(components : (Node Set) List, pg : Graph) =       
-        let (_, edges) = pg
+        let (nodes, edges) = pg
         
-        //ONLY place we use the actual components
+        //---------- Component Lists ----------\\
         //Create list of (idx, reducedComponent)
         let idxComponentList = List.fold (fun nc c -> (nc.Length, c)::nc) [] components
-        
-        //Compute the components contained in other components
-        let rec ComponentsContainedInOther (comps : (int * (Node Set)) List) (relation : (int * int) Set)=
-            match comps with
-            | [] -> relation
-            | (idx1, comp1)::tail ->
-                let relation = List.fold (fun (rel : (int * int) Set) (idx2, comp2) ->
-                    if (Set.difference comp1 comp2) = Set.empty then rel
-                    else if Set.isSubset comp1 comp2 then rel.Add(idx1, idx2)
-                    else if Set.isSubset comp2 comp1 then rel.Add(idx2, idx1)
-                    else rel
-                                ) relation tail
-                ComponentsContainedInOther tail relation
         
         //Create list of reduced components
         let reducedComponents = List.foldBack (fun curComponent componentList ->
@@ -33,55 +20,74 @@ module ComponentRelation =
                                         ) Set.empty components
             (Set.difference curComponent removeNodes)::componentList) components []
         
-        //Create list of (idx, reducedComponent)
-        let idxReducedComponentList = List.fold (fun nc c -> (nc.Length, c)::nc) [] reducedComponents
+        //---------- Node & Component Mappings ----------\\
+        //Create mapping component index -> nodes
+        let idxComponentsMap = Map.ofList (List.fold (fun nc c -> (nc.Length, c)::nc) [] reducedComponents)
         
-        //Create mapping idx -> reducedComponent
-        let idxComponentsMap = Map.ofList idxReducedComponentList        
-        
-        //Create mapping node -> reducedComponent index 
-        let rec createNodeToComponentIdxMap (componentList : (Node Set) List) (componentNum : int) (res : Map<Node, int>)=
+        //Create mapping node -> component indices
+        let rec createNodeToComponentsMap (componentList : (Node Set) List) (componentIdx : int) (res : Map<Node, int Set>)=
             match componentList with
             | [] -> res
-            | c::tail -> let newMap = Set.fold (fun (mapping : Map<Node, int>) node -> mapping.Add(node, componentNum)) res c
-                         createNodeToComponentIdxMap tail (componentNum+1) newMap
+            | c::tail -> let newMap = Set.fold (fun (mapping : Map<Node, int Set>) node -> mapping.Add(node, (mapping.Item(node).Add(componentIdx)))) res c
+                         createNodeToComponentsMap tail (componentIdx+1) newMap
         
-        let NodeToComponentIdxMap = createNodeToComponentIdxMap reducedComponents 0 Map.empty
+        let NodeToComponentsMap = createNodeToComponentsMap components 0 (List.fold (fun (m: Map<int, int Set>) idx -> m.Add(idx, Set.empty)  ) Map.empty [0..nodes.Length-1])
+        
+        
+        
+        //---------- Component Relation ----------\\
+        //Compute the components contained in other components
+        let rec ComponentsContainedInOther (comps : (int * (Node Set)) List) (relation : Map<int, int Set>)=
+            match comps with
+            | [] -> relation
+            | (idx1, comp1)::tail ->
+                let relation = List.fold (fun (rel : Map<int, int Set>) (idx2, comp2) ->
+                                    if (Set.difference comp1 comp2) = Set.empty then rel
+                                    else if Set.isSubset comp1 comp2 then rel.Add(idx1, (rel.Item(idx1).Add(idx2)))
+                                    else if Set.isSubset comp2 comp1 then rel.Add(idx2, (rel.Item(idx2).Add(idx1)))
+                                    else rel
+                                ) relation tail
+                ComponentsContainedInOther tail relation
         
         //Get relation between nodes
         let componentRelation =
             //printfn "Components: %A" components
             //printfn "Reduced Components %A" reducedComponents
             //printfn "NodeToComponentIdxMap"
-            //(NodeToComponentIdxMap |> Seq.iter (printf "%A "))
+            //(NodeToComponentsMap |> Seq.iter (printf "%A "))
             //printfn ""
             
-            let relation = ComponentsContainedInOther idxComponentList Set.empty
-            List.fold (fun (rel : (int * int) Set) (n1, _, n2) ->
-                          let idx1 = NodeToComponentIdxMap.Item(n1)
-                          let idx2 = NodeToComponentIdxMap.Item(n2)
-                          if (idx1 <> idx2) && (not (rel.Contains(idx2, idx1)))
-                          then rel.Add(idx1, idx2)
-                          else rel 
-                      ) relation edges
-            
-        //Collect the nodes in components this component (idx) has relations TO
-        let rec CollectToNodes (idx : int) (compRelation : (int * int) Set) =            
-            Set.fold (fun toNodes (idxFrom, idxTo) -> if idx = idxFrom
-                                                      then Set.union toNodes (idxComponentsMap.Item(idxTo))
-                                                      else toNodes
-            ) Set.empty compRelation
+            let relation = List.fold (fun (m: Map<int, int Set>) idx -> m.Add(idx, Set.empty)  ) Map.empty [0..components.Length-1]
+            let relation = ComponentsContainedInOther idxComponentList relation
+            List.fold (fun (rel : Map<int, int Set>) (n1, _, n2) ->
+                                         let components1 = NodeToComponentsMap.Item(n1)
+                                         let components2 = NodeToComponentsMap.Item(n2)
+                                         Set.fold (fun (rel : Map<int, int Set>) (cIdx1 : int) ->
+                                                    Set.fold(fun (rel : Map<int, int Set>) (cIdx2 : int) ->
+                                                                if (cIdx1 <> cIdx2) && (not (rel.Item(cIdx2).Contains(cIdx1)))
+                                                                then rel.Add(cIdx1, (rel.Item(cIdx1).Add(cIdx2)))
+                                                                else rel
+                                                            ) rel components2
+                                                  ) rel components1
+                       ) relation edges
         
+        //---------- Compute Top Nodes ----------\\
+        //Recursively collect the predecessor nodes of the component of this node
+        let rec CollectPredecessorNodes (idx : int) (nonTopNodes : Node Set)=
+            let nonTopComponents = componentRelation.Item(idx)
+            let nonTopNodes = (Set.fold (fun toNodes idxTo ->
+                                 Set.union toNodes (idxComponentsMap.Item(idxTo))
+                              ) nonTopNodes nonTopComponents)
+            Set.fold (fun (nodes : Node Set) cIdx -> CollectPredecessorNodes cIdx nodes ) nonTopNodes nonTopComponents
+                    
         member this.GetRelation() =
             componentRelation
         
         member this.GetTopNodes (pendingNodes : Node Set) =
             let topNodes = Set.fold (fun (top : Node Set) node ->
-                  let idx = NodeToComponentIdxMap.Item(node)
-                  //printfn "NodeIdx: %d" node
-                  //printfn "ComponentIdx: %d" idx
-                  //printfn "Remove: %A" (CollectToNodes idx componentRelation)
-                  Set.difference top (CollectToNodes idx componentRelation)
+                                     let indices = NodeToComponentsMap.Item(node)
+                                     let nonTopNodes = Set.fold (fun (s : int Set) (idx : int) -> Set.union s (CollectPredecessorNodes idx Set.empty)) Set.empty indices
+                                     Set.difference top nonTopNodes
                            ) pendingNodes pendingNodes
             let remainder = Set.difference pendingNodes topNodes
             (topNodes, remainder)
