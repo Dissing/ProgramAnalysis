@@ -79,6 +79,13 @@ module Main =
             let content = File.ReadAllText(path)
             let file = SourceFile(path, content)
             let graph = frontendPipeline config file
+            let (_, (nodes, edges)) = graph
+            (*printfn "Nodes: "
+            nodes |> Seq.iter (printf "%A ")
+            printfn ""
+            printfn "Edges: "
+            edges |> Seq.iter (printf "%A ")
+            printfn ""*)
             Benchmark.perform graph
 
         0 // return an integer exit code

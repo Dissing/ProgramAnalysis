@@ -162,7 +162,7 @@ module Expressions =
         let (_, (_, edges)) = graph
         edges |> List.fold (fun s (_, action, _) ->
             Set.union s (allArithmeticExpressionsInAction action)) Set.empty
-        
+    
     let expressionsContainingLocation (exprs: Set<AST.ArithmeticExpr>) (location: AmalgamatedLocation) =
         exprs |> Set.filter (fun expr ->
             (arithmeticFreeVariables expr).Contains location)
